@@ -1,0 +1,7 @@
+uw-imap-toolkit (0.1.1-0slp2+49) unstable; urgency=low
+
+  * Removed redundant code for dnet.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+49
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 22 Dec 2011 18:11:13 +0900

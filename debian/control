@@ -1,0 +1,30 @@
+Source: uw-imap-toolkit
+Priority: extra
+Maintainer: Kyuho Jo <kyuho.jo@samsung.com>
+Uploaders: Kyuho Jo <kyuho.jo@samsung.com>
+Build-Depends: debhelper (>= 5), libssl-dev, dlog-dev, libvconf-dev
+Standards-Version: 3.7.2
+Section: libs
+
+Package: libuw-imap-toolkit-0
+Section: libs
+Architecture: any
+Depends: openssl, libvconf-0
+Description: IMAP-2007e developed by University of Washington
+ IMAP-2007e run-time library for E-mail Framework
+
+Package: libuw-imap-toolkit-dev
+Section: libs
+Architecture: any
+Depends: openssl, libuw-imap-toolkit-0, dlog-dev, libvconf-dev
+Description: IMAP-2007e developed by University of Washington
+ IMAP-2007e development library for E-mail Framework
+XB-Generate-Docs: yes
+
+Package: libuw-imap-toolkit-dbg
+Section: debug
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libuw-imap-toolkit-0 (=${Source-Version})
+Description: IMAP-2007e developed by University of Washington
+ Debug package - IMAP-2007e development library for E-mail Framework
+
