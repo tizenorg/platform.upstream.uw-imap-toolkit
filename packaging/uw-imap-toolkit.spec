@@ -30,6 +30,7 @@ IMAP-2007e run-time library for E-mail Framework
 %package -n libuw-imap-toolkit-devel
 Summary:    IMAP-2007e developed by University of Washington
 Group:      TO_BE/FILLED_IN
+Requires:   libuw-imap-toolkit = %{version}-%{release}
 
 %description -n libuw-imap-toolkit-devel
 IMAP-2007e development library for E-mail Framework
@@ -59,12 +60,10 @@ rm -rf %{buildroot}
 %files -n libuw-imap-toolkit
 %defattr(-,root,root,-) 
 %{_libdir}/libuw-imap-toolkit.so.*
-#%{_libdir}/libimap-network.so.*
-
 
 
 %files -n libuw-imap-toolkit-devel
+%defattr(-,root,root,-) 
 %{_libdir}/libuw-imap-toolkit.so
-#%{_libdir}/libimap-network.so
 %{_libdir}/pkgconfig/uw-imap-toolkit.pc
 %{_includedir}/uw-imap-toolkit/*
