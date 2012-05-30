@@ -9,6 +9,7 @@ Release:    0
 Group:      TO_BE/FILLED_IN
 License:    TO BE FILLED IN
 Source0:    %{name}-%{version}.tar.gz
+Source1001: packaging/uw-imap-toolkit.manifest 
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires: libgcrypt-devel
@@ -39,6 +40,7 @@ IMAP-2007e development library for E-mail Framework
 %setup -q
 
 %build
+cp %{SOURCE1001} .
 ./autogen.sh
 %configure --disable-static 
 
@@ -58,11 +60,13 @@ rm -rf %{buildroot}
 
 
 %files -n libuw-imap-toolkit
+%manifest uw-imap-toolkit.manifest
 %defattr(-,root,root,-) 
 %{_libdir}/libuw-imap-toolkit.so.*
 
 
 %files -n libuw-imap-toolkit-devel
+%manifest uw-imap-toolkit.manifest
 %defattr(-,root,root,-) 
 %{_libdir}/libuw-imap-toolkit.so
 %{_libdir}/pkgconfig/uw-imap-toolkit.pc
