@@ -90,6 +90,9 @@ typedef struct imap_cap {
 				/* supported authenticators */
   unsigned int auth : MAXAUTHENTICATORS;
   THREADER *threader;		/* list of threaders */
+#ifdef __FEATURE_XLIST_SUPPORT__
+  unsigned int xlist : 1;
+#endif /* __FEATURE_XLIST_SUPPORT__ */
 } IMAPCAP;
 
 /* IMAP4rev1 level or better */

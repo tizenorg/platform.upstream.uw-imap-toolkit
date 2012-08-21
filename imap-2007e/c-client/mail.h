@@ -1,6 +1,6 @@
 /* ========================================================================
  * Copyright 1988-2008 University of Washington
- *
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -574,6 +574,19 @@
 				/* has no selectable inferiors */
 #define LATT_HASNOCHILDREN (long) 0x40
 
+#ifdef __FEATURE_XLIST_SUPPORT__
+
+#define LATT_XLIST_INBOX     (long) 0x0100  /* XLIST - Inbox */
+#define LATT_XLIST_ALL       (long) 0x0200  /* XLIST - All or AllMail */
+#define LATT_XLIST_DRAFTS    (long) 0x0400  /* XLIST - Drafts  */
+#define LATT_XLIST_SENT      (long) 0x0800  /* XLIST - Sent */
+#define LATT_XLIST_JUNK      (long) 0x1000  /* XLIST - Junk or Spam */
+#define LATT_XLIST_FLAGGED   (long) 0x2000  /* XLIST - Flagged or Starred */
+#define LATT_XLIST_TRASH     (long) 0x4000  /* XLIST - Trash */
+#define LATT_XLIST_ARCHIVE   (long) 0x8000  /* XLIST - Archive */
+
+#endif /* __FEATURE_XLIST_SUPPORT__ */
+
 
 /* Sort functions */
 
@@ -743,9 +756,7 @@ typedef struct mail_envelope {
 #define MESSAGE struct mail_body_message
 #define PARAMETER struct mail_body_parameter
 #define PART struct mail_body_part
-#ifdef __DOWNLOAD_BODY_ATTACHMENT_OPTIMIZATION__
-#define PARTLIST struct mail_body_part_list
-#endif
+#define PARTLIST struct mail_body_part_list /* __FEATURE_DOWNLOAD_BODY_ATTACHMENT_OPTIMIZATION__ */
 #define PARTTEXT struct mail_body_text
 
 /* Message body text */
@@ -802,12 +813,11 @@ PART {
   PART *next;			/* next body part */
 };
 
-#ifdef __DOWNLOAD_BODY_ATTACHMENT_OPTIMIZATION__
+/* __FEATURE_DOWNLOAD_BODY_ATTACHMENT_OPTIMIZATION__ */
 PARTLIST{
   BODY *body;			/* body information for this part */
   PART *next;			/* next body part */
 };
-#endif
 
 
 /* RFC-822 Message */
@@ -1536,14 +1546,14 @@ DRIVER {
 #define mail_fetchflags(stream,sequence) \
   mail_fetch_flags (stream,sequence,NIL)
 #define mail_fetchflags_full mail_fetch_flags
-#ifdef __HEADER_OPTIMIZATION__
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
 #define mail_fetchenvelope(stream,msgno) \
   mail_fetch_structure (stream,msgno,NIL,NIL,0)
 #else
 #define mail_fetchenvelope(stream,msgno) \
   mail_fetch_structure (stream,msgno,NIL,NIL)
 #endif
-#ifdef __HEADER_OPTIMIZATION__
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
 #define mail_fetchstructure(stream,msgno,body) \
   mail_fetch_structure (stream,msgno,body,NIL,0)
 #else
@@ -1661,7 +1671,7 @@ void mail_fetch_overview (MAILSTREAM *stream,char *sequence,overview_t ofn);
 void mail_fetch_overview_sequence (MAILSTREAM *stream,char *sequence,
 				   overview_t ofn);
 void mail_fetch_overview_default (MAILSTREAM *stream,overview_t ofn);
-#ifdef __HEADER_OPTIMIZATION__
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
 ENVELOPE *mail_fetch_structure (MAILSTREAM *stream,unsigned long msgno,
 				BODY **body,long flags,int iDownload);
 #else

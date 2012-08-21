@@ -1,6 +1,7 @@
 /* ========================================================================
  * Copyright 1988-2007 University of Washington
- *
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd.
+
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -442,10 +443,7 @@ MAILSTREAM *pop3_open (MAILSTREAM *stream)
 
 	sprintf(temp, "Pop3_open - mb->apop - %d", mb.apop);
 	mm_log(temp, NIL);
-	//EM_DEBUG_LOG("Pop3_open - mb->apop - %d", mb.apop);
 
-//	printf(" >>>>>>>>>>>>>>>>>>>>>>>> Stream APOP [ %d ]>>>> \n", stream->apop);
-	
 	if(timestamp && mb.apop != 0)
 		apop = 1;
 	else
@@ -456,8 +454,6 @@ MAILSTREAM *pop3_open (MAILSTREAM *stream)
 		apop = 0;
 	}
 	
-	//EM_DEBUG_LOG(" >>>>>>>>>>>>>>>>>>>>>>>> Stream APOP [ %d ]>>>> \n", apop);
-		
 	if(apop)
 	{
 		mm_log(timestamp, NIL);

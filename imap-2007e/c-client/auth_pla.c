@@ -1,6 +1,6 @@
 /* ========================================================================
  * Copyright 1988-2006 University of Washington
- *
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -59,9 +59,6 @@ long auth_plain_client (authchallenge_t challenger,authrespond_t responder,
   void *challenge;
   unsigned long clen;
   long ret = NIL;
-#ifdef _DEBUG_LOG
-	char tmp[512];
-#endif
 				/* snarl if not SSL/TLS session */
   if (!mb->sslflag && !mb->tlsflag)
     mm_log ("SECURITY PROBLEM: insecure server advertised AUTH=PLAIN",WARN);
@@ -88,11 +85,6 @@ long auth_plain_client (authchallenge_t challenger,authrespond_t responder,
       char *t = response;	/* copy authorization id */
 
 	memset(response, 0x00, rlen);
-	
-#ifdef _DEBUG_LOG
-      sprintf (tmp,"auth_plain_client : rlen[%d]", rlen);
-      mm_log (tmp,WARN);
-#endif
 
       if (mb->authuser[0]) for (u = user; *u; *t++ = *u++);
       *t++ = '\0';		/* delimiting NUL */
@@ -113,10 +105,6 @@ long auth_plain_client (authchallenge_t challenger,authrespond_t responder,
 	else {
 	  ++*trial;		/* can try again if necessary */
 	  ret = LONGT;		/* check the authentication */
-#ifdef _DEBUG_LOG
-	      sprintf (tmp,"auth_plain_client : trial[%d]", *trial);
-	      mm_log (tmp,WARN);
-#endif
 	}
       }
       memset (response,0,rlen);	/* erase credentials */

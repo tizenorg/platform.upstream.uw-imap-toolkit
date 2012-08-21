@@ -28,8 +28,6 @@
 
 /* MD5 context */
 
-
-
 #define MD5BLKLEN 64		/* MD5 block length */
 #define MD5DIGLEN 16		/* MD5 digest length */
 

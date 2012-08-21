@@ -24,13 +24,13 @@ libuw_imap_toolkit_la_SOURCES= 	imap-2007e/c-client/lnx_osdep.c \
 libuw_imap_toolkit_la_CPPFLAGS= -I. \
                 -I$(includedir)/openssl \
 			    -I$(srcdir)/imap-2007e/c-client \
-				-I./common \
-				$(DLOG_CFLAGS) \
-				$(SSL_CFLAGS) \
+			    -I./common \
+			    $(DLOG_CFLAGS) \
+			    $(SSL_CFLAGS) \
 			    -D_DEBUG_LOG \
-			    -DFEATURE_NEW_DEBUG \
-			    -D__HEADER_OPTIMIZATION__ \
-			    -D__SEND_OPTMIZATION__ \
+			    -D__FEATURE_HEADER_OPTIMIZATION__ \
+			    -D__FEATURE_SEND_OPTMIZATION__ \
+			    -D__FEATURE_XLIST_SUPPORT__ \
 			    -DCREATEPROTO=unixproto -DEMPTYPROTO=unixproto \
 			    -DMAILSPOOL=\"/var/spool/mail\" \
 			    -DANONYMOUSHOME=\"/var/spool/mail/anonymous\" \
@@ -49,7 +49,7 @@ libuw_imap_toolkit_la_CPPFLAGS= -I. \
 			    -DEXPORT_API="__attribute__((visibility(\"default\")))"
  
 #				-DFEATURE_CORE_DEBUG 
-#                     		-D__NON_BLOCKING_SSL_WRITE__ 
+#               -D__NON_BLOCKING_SSL_WRITE__ 
 			    
 libuw_imap_toolkit_la_LIBADD = -L$(prefix)/lib \
 			       $(SSL_LIBS) 

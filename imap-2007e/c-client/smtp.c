@@ -1,6 +1,7 @@
 /* ========================================================================
  * Copyright 1988-2008 University of Washington
- *
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd.
+
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -290,11 +291,6 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
   AUTHENTICATOR *at;
   long ret = NIL;
 
-#ifdef _DEBUG_LOG	
-	sprintf(tmp,"smtp_auth : username[%s], authname[%s]",mb->user, mb->authuser);
-	mm_log(tmp, NIL);
-#endif
-
   for (auths = ESMTP.auth, stream->saslcancel = NIL;
        !ret && stream->netstream && auths &&
        (at = mail_lookup_auth (find_rightmost_bit (&auths) + 1)); ) {
@@ -398,7 +394,7 @@ void *smtp_challenge (void *s,unsigned long *len)
   char tmp[MAILTMPLEN];
   void *ret = NIL;
   SENDSTREAM *stream = (SENDSTREAM *) s;
-#if 1		// for smtp.mail.yahoo.co.kr
+  // for smtp.mail.yahoo.co.kr
 	if (!strcmp(stream->reply+4, "ok, go on")) {
 		sprintf (tmp,"smtp_challenge : Server bug: non-empty initial PLAIN challenge 3: %.80s",stream->reply+4);
 		mm_log (tmp,WARN);
@@ -406,19 +402,13 @@ void *smtp_challenge (void *s,unsigned long *len)
 		*len = 0;		// MUST BE
 		return cpystr("ok, go on");
 	}
-#endif
-#ifdef _DEBUG_LOG	
-	sprintf (tmp,"smtp_challenge : reply[%s]",stream->reply);
-	mm_log(tmp, NIL);
-#endif
-#if 1		// for smtp.naver.com or other servers that reply only "THREE" response digit code whose string length is 3
+	// for smtp.naver.com or other servers that reply only "THREE" response digit code whose string length is 3
   	if ( (stream->replycode == SMTPAUTHREADY) && 
   		strlen(stream->reply) <= 3 )				// only response digit code exists in the reply buffer
   	{
     		*len = 0;
     		return cpystr("");
 	}
-#endif
   if ((stream->replycode == SMTPAUTHREADY) &&
       !(ret = rfc822_base64 ((unsigned char *) stream->reply + 4,
 			     strlen (stream->reply + 4),len))) {
@@ -441,9 +431,6 @@ long smtp_response (void *s,char *response,unsigned long size)
   SENDSTREAM *stream = (SENDSTREAM *) s;
   unsigned long i,j;
   char *t,*u;
-#ifdef _DEBUG_LOG	
-	char tmp[256];
-#endif
 
   if (response) {		/* make CRLFless BASE64 string */
     if (size) {
@@ -451,10 +438,6 @@ long smtp_response (void *s,char *response,unsigned long size)
 	   j < i; j++) if (t[j] > ' ') *u++ = t[j];
       *u = '\0';		/* tie off string */
 
-#ifdef _DEBUG_LOG	
-      sprintf (tmp,"smtp_response : encoded response to send[%s]", t);
-	mm_log(tmp, NIL);
-#endif	
       i = smtp_send (stream,t,NIL);
       fs_give ((void **) &t);
     }
@@ -704,11 +687,6 @@ long smtp_send (SENDSTREAM *stream,char *command,char *args)
   if (args) sprintf (s,"%s %s",command,args);
   else strcpy (s,command);
 
-#ifdef _DEBUG_LOG	
-  char tmp[512];
-  sprintf(tmp, "smtp_send command : [%s]", s);
-  mm_log(tmp, NIL);
-#endif  
   if (stream->debug) mail_dlog (s,stream->sensitive);
   strcat (s,"\015\012");
 				/* send the command */
@@ -736,11 +714,6 @@ long smtp_reply (SENDSTREAM *stream)
   if (stream->reply) fs_give ((void **) &stream->reply);
   				/* get reply */
   if (stream->netstream && (stream->reply = net_getline (stream->netstream))) {
-#ifdef _DEBUG_LOG	
-	char tmp[512];
-	sprintf(tmp, "smtp_reply : reply[%s]", stream->reply);
-  	mm_log(tmp, NIL);
-#endif
     if (stream->debug) mm_dlog (stream->reply);
 				/* return response code */
     reply = atol (stream->reply);
@@ -871,7 +844,7 @@ static long smtp_seterror (SENDSTREAM *stream,long code,char *text)
 }
 
 
-#ifdef __SEND_OPTMIZATION__
+#ifdef __FEATURE_SEND_OPTMIZATION__
 /* Simple Mail Transfer Protocol filter mail
  * Accepts: stream
  *	    string

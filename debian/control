@@ -16,7 +16,7 @@ Description: IMAP-2007e developed by University of Washington
 Package: libuw-imap-toolkit-dev
 Section: libs
 Architecture: any
-Depends: openssl, libuw-imap-toolkit-0, dlog-dev, libvconf-dev
+Depends: openssl, libuw-imap-toolkit-0
 Description: IMAP-2007e developed by University of Washington
  IMAP-2007e development library for E-mail Framework
 XB-Generate-Docs: yes

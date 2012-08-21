@@ -1,6 +1,6 @@
 /* ========================================================================
  * Copyright 1988-2008 University of Washington
- *
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -1508,7 +1508,7 @@ void mail_fetch_overview_default (MAILSTREAM *stream,overview_t ofn)
   ov.optional.lines = 0;
   ov.optional.xref = NIL;
   for (i = 1; i <= stream->nmsgs; i++)
-#ifdef __HEADER_OPTIMIZATION__	
+#ifdef __FEATURE_HEADER_OPTIMIZATION__	
 /* New last parameter 0 or 1 added to identify if the call is to fetch header or fetch body 
  * 0 mean fetch mail header; 1 means fetch mail full body or attachment */
     if (((elt = mail_elt (stream,i))->sequence) &&
@@ -1540,7 +1540,7 @@ void mail_fetch_overview_default (MAILSTREAM *stream,overview_t ofn)
 /* New last parameter 0 or 1 added to identify if the call is to fetch header or fetch body 
  * 0 mean fetch mail header; 1 means fetch mail full body or attachment */
 
-#ifdef __HEADER_OPTIMIZATION__	
+#ifdef __FEATURE_HEADER_OPTIMIZATION__	
 ENVELOPE *mail_fetch_structure (MAILSTREAM *stream,unsigned long msgno,
 				BODY **body,long flags,int iDownload)
 #else
@@ -1555,7 +1555,7 @@ ENVELOPE *mail_fetch_structure (MAILSTREAM *stream,unsigned long msgno,
   unsigned long hdrsize;
   STRING bs;
 				/* do the driver's action if specified */
-#ifdef __HEADER_OPTIMIZATION__
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
   if (stream->dtb && stream->dtb->structure && iDownload == 1)
     return (*stream->dtb->structure) (stream,msgno,body,flags);
 #else
@@ -1583,7 +1583,7 @@ ENVELOPE *mail_fetch_structure (MAILSTREAM *stream,unsigned long msgno,
     env = &elt->private.msg.env;
     b = &elt->private.msg.body;
   }
-#ifdef __HEADER_OPTIMIZATION__
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
 if(iDownload==1)
 {
   if (stream->dtb && ((body && !*b) || !*env || (*env)->incomplete)) {
@@ -2779,7 +2779,7 @@ BODY *mail_body (MAILSTREAM *stream,unsigned long msgno,unsigned char *section)
   unsigned long i;
 				/* make sure have a body */
 
-#ifdef __HEADER_OPTIMIZATION__  
+#ifdef __FEATURE_HEADER_OPTIMIZATION__  
  	if (section && *section && mail_fetch_structure (stream,msgno,&b,NIL,1) && b)
 #else
   if (section && *section && mail_fetchstructure (stream,msgno,&b) && b)
@@ -4970,7 +4970,7 @@ THREADNODE *mail_thread_references (MAILSTREAM *stream,char *charset,
 				/* still missing data? */
       if (!s->date || !s->subject || !s->message_id || !s->references) {
 				/* try to load data from envelope */
-#ifdef __HEADER_OPTIMIZATION__	
+#ifdef __FEATURE_HEADER_OPTIMIZATION__	
 /* New last parameter 0 or 1 added to identify if the call is to fetch header or fetch body 
  * 0 mean fetch mail header; 1 means fetch mail full body or attachment */
 	if (env = mail_fetch_structure (stream,s->num,NIL,NIL,0))

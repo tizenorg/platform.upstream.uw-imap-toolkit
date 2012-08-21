@@ -1,6 +1,7 @@
 /* ========================================================================
  * Copyright 1988-2008 University of Washington
- *
+ * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd.
+
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -558,13 +559,22 @@ void imap_list_work (MAILSTREAM *stream,char *cmd,char *ref,char *pat,
     args[0] = &aref; args[1] = &apat; args[2] = NIL;
     aref.type = ASTRING; aref.text = (void *) (ref ? ref : "");
     apat.type = LISTMAILBOX; apat.text = (void *) pat;
-				/* referrals armed? */
+
+#ifdef __FEATURE_XLIST_SUPPORT__
+    if (LOCAL->cap.xlist) { /* xlist? */
+    	if (!compare_cstring (cmd,"LIST")) cmd = "XLIST";
+    }
+#endif /* __FEATURE_XLIST_SUPPORT__ */
+
+	/* referrals armed? */
     if (LOCAL->cap.mbx_ref && mail_parameters (stream,GET_IMAPREFERRAL,NIL)) {
 				/* yes, convert LIST -> RLIST */
       if (!compare_cstring (cmd,"LIST")) cmd = "RLIST";
 				/* and convert LSUB -> RLSUB */
       else if (!compare_cstring (cmd,"LSUB")) cmd = "RLSUB";
     }
+
+
     imap_send (stream,cmd,args);
   }
   else if (LEVEL1176 (stream)) {/* convert to IMAP2 format wildcard */
@@ -1339,7 +1349,7 @@ void imap_close (MAILSTREAM *stream,long options)
 void imap_fast (MAILSTREAM *stream,char *sequence,long flags)
 {
 /* Open source selected only FT_UID, and ignored other flags sent by application. This is corrected */
-#ifdef __HEADER_OPTIMIZATION__
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
   IMAPPARSEDREPLY *reply = imap_fetch (stream,sequence,flags);
 #else
   IMAPPARSEDREPLY *reply = imap_fetch (stream,sequence,flags & FT_UID);
@@ -1414,7 +1424,7 @@ long imap_overview (MAILSTREAM *stream,overview_t ofn)
   ov.optional.lines = 0;	/* now overview each message */
   ov.optional.xref = NIL;
   if (ofn) for (i = 1; i <= stream->nmsgs; i++)
-#ifdef __HEADER_OPTIMIZATION__	
+#ifdef __FEATURE_HEADER_OPTIMIZATION__	
 /* New last parameter 0 or 1 added to identify if the call is to fetch header or fetch body 
  * 0 mean fetch mail header; 1 means fetch mail full body or attachment */
  if (((elt = mail_elt (stream,i))->sequence) &&
@@ -3591,8 +3601,7 @@ IMAPPARSEDREPLY *imap_reply (MAILSTREAM *stream,char *tag)
 	  * [g.shyamakshi@samsung.com] Stream->unhealthy check is required to recognize other conditions as well - Unknown body/RFC822 message property, Unexpected tagged response, Junk data (stream invalid), etc 
 	  * On recognizing stream as unhealthy, no further reply should be parsed.
 	  */
-	if(stream->unhealthy)
-	{
+	if(stream->unhealthy) {
 		break;
 	}
   }
@@ -4062,6 +4071,57 @@ void imap_parse_unsolicited (MAILSTREAM *stream,IMAPPARSEDREPLY *reply)
       fs_give ((void **) &t);	/* flush mailbox name */
     }
   }
+#ifdef __FEATURE_XLIST_SUPPORT__
+  else if (!strcmp (reply->key,"XLIST") &&
+  	   reply->text && (*reply->text == '(') &&
+  	   (s = strchr (reply->text,')')) && (s[1] == ' ')) {
+      char delimiter = '\0';
+      *s++ = '\0';		/* tie off attribute list */
+  				/* parse attribute list */
+      if (t = strtok_r (reply->text+1," ",&r)) do {
+        if (!compare_cstring (t,"\\NoInferiors")) i |= LATT_NOINFERIORS;
+        else if (!compare_cstring (t,"\\NoSelect")) i |= LATT_NOSELECT;
+        else if (!compare_cstring (t,"\\Marked")) i |= LATT_MARKED;
+        else if (!compare_cstring (t,"\\Unmarked")) i |= LATT_UNMARKED;
+        else if (!compare_cstring (t,"\\HasChildren")) i |= LATT_HASCHILDREN;
+        else if (!compare_cstring (t,"\\HasNoChildren")) i |= LATT_HASNOCHILDREN;
+
+        /* Mailbox type attribute*/
+        else if (!compare_cstring (t,"\\Inbox"))   i |= LATT_XLIST_INBOX;   /* RFC 6154 and Gmail */
+        else if (!compare_cstring (t,"\\AllMail")) i |= LATT_XLIST_ALL;     /* Gmail */
+        else if (!compare_cstring (t,"\\All"))     i |= LATT_XLIST_ALL;     /* RFC 6154 */
+        else if (!compare_cstring (t,"\\Drafts"))  i |= LATT_XLIST_DRAFTS;  /* RFC 6154 and Gmail */
+        else if (!compare_cstring (t,"\\Sent"))    i |= LATT_XLIST_SENT;    /* RFC 6154 and Gmail */
+        else if (!compare_cstring (t,"\\Spam"))    i |= LATT_XLIST_JUNK;    /* Gmail */
+        else if (!compare_cstring (t,"\\Junk"))    i |= LATT_XLIST_JUNK;    /* RFC 6154 */
+        else if (!compare_cstring (t,"\\Starred")) i |= LATT_XLIST_FLAGGED; /* Gmail */
+        else if (!compare_cstring (t,"\\Flagged")) i |= LATT_XLIST_FLAGGED; /* RFC 6154 */
+        else if (!compare_cstring (t,"\\Trash"))   i |= LATT_XLIST_TRASH;   /* RFC 6154 and Gmail */
+  		/* ignore extension flags */
+      }
+      while (t = strtok_r (NIL," ",&r));
+      switch (*++s) {		/* process delimiter */
+      case 'N':			/* NIL */
+      case 'n':
+        s += 4;			/* skip over NIL<space> */
+        break;
+      case '"':			/* have a delimiter */
+        delimiter = (*++s == '\\') ? *++s : *s;
+        s += 3;			/* skip over <delimiter><quote><space> */
+      }
+  				/* parse the mailbox name */
+      if (t = imap_parse_astring (stream,&s,reply,&j)) {
+  				/* prepend prefix if requested */
+        if (LOCAL->prefix && ((strlen (LOCAL->prefix) + j) < IMAPTMPLEN))
+  	sprintf (s = LOCAL->tmp,"%s%s",LOCAL->prefix,(char *) t);
+        else s = t;		/* otherwise just mailbox name */
+  				/* pass data to main program */
+        if (reply->key[1] == 'S') mm_lsub (stream,delimiter,s,i);
+        else mm_list (stream,delimiter,s,i);
+        fs_give ((void **) &t);	/* flush mailbox name */
+      }
+    }
+#endif /* __FEATURE_XLIST_SUPPORT__ */
   else if (!strcmp (reply->key,"NAMESPACE")) {
     if (LOCAL->namespace) {
       mail_free_namespace (&LOCAL->namespace[0]);
@@ -4971,32 +5031,44 @@ unsigned char *imap_parse_string (MAILSTREAM *stream,unsigned char **txtptr,
       while (i -= j);
     }
     if (len) *len = i;		/* set return value */
-    if (md && mg) {		/* have special routine to slurp string? */
-      if (md->first) {		/* partial fetch? */
-	md->first--;		/* restore origin octet */
-	md->last = i;		/* number of octets that we got */
-      }
-      else md->flags |= MG_COPY;/* otherwise flag need to copy */
-      string = (*mg) (net_getbuffer,LOCAL->netstream,i,md);
-    }
-    else {			/* must slurp into free storage */
-      string = (char *) fs_get ((size_t) i + 1);
-      *string = '\0';		/* init in case getbuffer fails */
-				/* get the literal */
-      if (rp) for (k = 0; j = min ((long) MAILTMPLEN,(long) i); i -= j) {
-	net_getbuffer (LOCAL->netstream,j,string + k);
-	(*rp) (md,k += j);
-      }
-      else net_getbuffer (LOCAL->netstream,i,string);
-    }
-    fs_give ((void **) &reply->line);
-    if (flags && string)	/* need to filter newlines? */
-      for (st = string; st = strpbrk (st,"\015\012\011"); *st++ = ' ');
-				/* get new reply text line */
-    if (!(reply->line = net_getline (LOCAL->netstream)))
-      reply->line = cpystr ("");
-    if (stream->debug) mm_dlog (reply->line);
-    *txtptr = reply->line;	/* set text pointer to point at it */
+	/* illegal string parsing */
+    while (c == '}') c = *++*txtptr;
+
+    if (*++*txtptr == ' ') {
+	string = (char *) fs_get ((size_t) i + 1);
+	for (j = 0; j < i; j++) {	/* copy the string */
+		string[j] = *++*txtptr;
+	}
+	++*txtptr;			/* bump last char */
+	string[j] = '\0';		/* tie off string */
+    } else { 
+	    if (md && mg) {		/* have special routine to slurp string? */
+	      if (md->first) {		/* partial fetch? */
+		md->first--;		/* restore origin octet */
+		md->last = i;		/* number of octets that we got */
+	      }
+	      else md->flags |= MG_COPY;/* otherwise flag need to copy */
+	      string = (*mg) (net_getbuffer,LOCAL->netstream,i,md);
+	    }
+	    else {			/* must slurp into free storage */
+	      string = (char *) fs_get ((size_t) i + 1);
+	      *string = '\0';		/* init in case getbuffer fails */
+					/* get the literal */
+	      if (rp) for (k = 0; j = min ((long) MAILTMPLEN,(long) i); i -= j) {
+		net_getbuffer (LOCAL->netstream,j,string + k);
+		(*rp) (md,k += j);
+	      }
+	      else 	net_getbuffer (LOCAL->netstream,i,string);
+	    }
+	    fs_give ((void **) &reply->line);
+	    if (flags && string)	/* need to filter newlines? */
+	      for (st = string; st = strpbrk (st,"\015\012\011"); *st++ = ' ');
+					/* get new reply text line */
+	    if (!(reply->line = net_getline (LOCAL->netstream)))
+	      reply->line = cpystr ("");
+	    if (stream->debug) mm_dlog (reply->line);
+	    *txtptr = reply->line;	/* set text pointer to point at it */
+    	}    	
     break;
   default:
     sprintf (LOCAL->tmp,"Not a string: %c%.80s",c,(char *) *txtptr);
@@ -5560,6 +5632,9 @@ void imap_parse_capabilities (MAILSTREAM *stream,char *t)
 	else if (!compare_cstring (s,"ANONYMOUS")) LOCAL->cap.authanon = T;
       }
     }
+#ifdef __FEATURE_XLIST_SUPPORT__
+    else if (!compare_cstring (t,"XLIST")) LOCAL->cap.xlist = T;
+#endif /* __FEATURE_XLIST_SUPPORT__ */
 				/* ignore other capabilities */
   }
 				/* disable LOGIN if PLAIN also advertised */
@@ -5586,7 +5661,7 @@ IMAPPARSEDREPLY *imap_fetch (MAILSTREAM *stream,char *sequence,long flags)
 						     flags & FT_UID);
   args[0] = &aseq; aseq.type = SEQUENCE; aseq.text = (void *) sequence;
   args[1] = &aarg; aarg.type = ATOM;
-#ifdef __HEADER_OPTIMIZATION__	
+#ifdef __FEATURE_HEADER_OPTIMIZATION__	
   aenv.type = ATOM; aenv.text = (void *) "ENVELOPE";
   /* g.shyamakshi@samsung.com - Check FT_SELECTEDHDRS flag to fetch only selected header fields */
   ahhr.type = ATOM;

@@ -55,28 +55,10 @@ tcp_getdata_lnx(TCPSTREAM* stream)
 	sockid = stream->tcpsi;
 	maxfd = sockid + 1;
 	
-	//IMAP_DEBUG_LOG("start sockid %d", sockid);	
 	if (sockid < 0) return false;
 	
 	while (stream->ictr < 1) 
 	{
-//#ifdef TEST_CANCEL_JOB
-#if 0
-		if (!em_core_check_thread_status()) 
-		{
-			IMAP_DEBUG_EXCEPTION("\t thread canceled...\n");
-			tcp_abort(stream);
-			goto JOB_CANCEL;
-		}
-#endif
-
-
-		//if (_g_canceled){
-		//	IMAP_DEBUG_LOG1("thread canceled\n");
-		//	tcp_abort(stream);
-		//	return 0;
-		//}
-		
 		tmout.tv_usec = 0;//1000*10;
 		tmout.tv_sec = 1;
 		
@@ -86,8 +68,6 @@ tcp_getdata_lnx(TCPSTREAM* stream)
 		sret = select(maxfd, &readfds, NULL, NULL, &tmout);
 		
 		if (sret < 0) {
-			IMAP_DEBUG_LOG("select error [%d]", errno);
-			
 			tcp_abort(stream);
 			return false;
 		}
@@ -107,19 +87,12 @@ tcp_getdata_lnx(TCPSTREAM* stream)
 		
 		if ((nread = read(sockid, stream->ibuf, BUFLEN)) < 0) {
 			IMAP_DEBUG_EXCEPTION("\t socket read failed...\n");
-			
-			//em_core_set_network_error(EMF_ERROR_SOCKET_FAILURE);		//TODO: confirm me
-			
-			//if (errno==EINTR) contine;
 			tcp_abort(stream);
 			return false;
 		}
 		
 		if (!nread) {
 			IMAP_DEBUG_EXCEPTION("\t socket read no data...\n");
-			
-			//em_core_set_network_error(EMF_ERROR_INVALID_RESPONSE);		//TODO: confirm me
-			
 			tcp_abort(stream);
 			return false;
 		}
@@ -128,21 +101,7 @@ tcp_getdata_lnx(TCPSTREAM* stream)
 		stream->iptr = stream->ibuf;
 	}
 
-#if 0
-	if (_g_canceled) {
-		IMAP_DEBUG_EXCEPTION("\t thread canceled...\n");
-		
-		tcp_abort(stream);
-		return false;
-	}
-#endif	
-	//IMAP_DEBUG_LOG("end");	
 	return true;
-	
-#ifdef TEST_CANCEL_JOB
-JOB_CANCEL:
-	return false;
-#endif
 }
 
 /* TCP/IP receive line
