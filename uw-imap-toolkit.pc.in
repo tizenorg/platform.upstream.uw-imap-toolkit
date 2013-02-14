@@ -1,0 +1,9 @@
+prefix=@prefix@
+libdir=@prefix@/lib
+includedir=@prefix@/include
+ 
+Name: IMAP Toolkit Library 
+Description: IMAP-2007e Library
+Version: $version
+Libs: -L${libdir} -luw-imap-toolkit -lcrypt
+Cflags: -I${includedir}/uw-imap-toolkit
