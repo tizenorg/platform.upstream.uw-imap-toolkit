@@ -1,0 +1,27 @@
+#!/bin/sh
+
+#################################################################
+# Change file permission
+#################################################################
+echo "[UW-IMAP-TOOLKIT] Start setting permission ..."
+# 1. libraries
+chmod 644 /usr/lib/libuw-imap-toolkit.so.0.0.0
+chmod 644 /usr/lib/libuw-imap-toolkit.so
+chmod 644 /usr/lib/libuw-imap-toolkit.so.0
+echo "[UW-IMAP-TOOLKIT] Finish setting permission."
+
+#################################################################
+# Change file owner
+#################################################################
+echo "[UW-IMAP-TOOLKIT] Start setting owner ..."
+if [ ${USER} = "root" ]
+then
+	# 1. libraries
+	chown root:root /usr/lib/libuw-imap-toolkit.so.0.0.0
+	chown root:root /usr/lib/libuw-imap-toolkit.so
+	chown root:root /usr/lib/libuw-imap-toolkit.so.0
+else
+	echo "[UW-IMAP-TOOLKIT] Can't change owner. USER is not root."
+fi
+echo "[UW-IMAP-TOOLKIT] Finish setting and owner."
+
