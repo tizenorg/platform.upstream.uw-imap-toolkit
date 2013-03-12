@@ -1,0 +1,630 @@
+uw-imap-toolkit (0.1.2-0) unstable; urgency=low
+
+  * New Feature : XLIST supported.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.2-0
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 19 Apr 2012 18:41:57 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+51) unstable; urgency=low
+
+  * Add the parsing logic in imap_parse_string.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+51
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Fri, 03 Feb 2012 16:33:41 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+50) unstable; urgency=low
+
+  * Modified Package configuration file. 
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+50
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 26 Dec 2011 16:37:26 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+49) unstable; urgency=low
+
+  * Removed redundant code for dnet.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+49
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 22 Dec 2011 18:11:13 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+48) unstable; urgency=low
+
+  * Improved in using 'select' function. (Merged from imap-2007f)
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+48
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Fri, 02 Dec 2011 20:27:58 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+47) unstable; urgency=low
+
+  * Enabled timeout on SSL connection 
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+47
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 30 Nov 2011 20:11:39 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+46) unstable; urgency=low
+
+  * Merged the connman 
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+46
+
+ -- Sunghyun Kwon <sh0701.kwon@samsung.com>  Tue, 29 Nov 2011 13:11:37 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+45) unstable; urgency=low
+
+  * Disabled __NON_BLOCKING_SSL_WRITE__
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+45
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Fri, 09 Sep 2011 17:12:09 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+44) unstable; urgency=low
+
+  * Proper handling for error 'NET_ERR_CONNECTION_OPENING'.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+44
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 09 Aug 2011 20:03:26 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+43) unstable; urgency=low
+
+  * Enabled __NON_BLOCKING_SSL_WRITE__
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+43
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 09 Aug 2011 14:22:12 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+42) unstable; urgency=low
+
+  * Trying to open DNET Connection again for DNET disconnected when creating a socket.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+42
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 04 Jul 2011 15:13:30 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+41) unstable; urgency=low
+
+  * Connection Failure recovery
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+41
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 09 Jun 2011 18:12:33 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+40) unstable; urgency=low
+
+  * Disabled __NON_BLOCKING_SSL_WRITE__
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+40
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 12 May 2011 20:51:40 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+39) unstable; urgency=low
+
+  * Fixed build break on checking API change
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+39
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 14 Feb 2011 15:35:38 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+38) unstable; urgency=low
+
+  * Fixed build break. 
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+38
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 14 Feb 2011 11:57:20 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+37) unstable; urgency=low
+
+  * Rollback imap-network/imap-network.h
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+37
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 14 Feb 2011 11:24:38 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+36) unstable; urgency=low
+
+  * Rollback imap-network/imap-network.h
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+36
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 14 Feb 2011 10:49:41 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+35) unstable; urgency=low
+
+  * Modification on checking connection status.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+35
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 14 Feb 2011 09:50:41 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+34) unstable; urgency=low
+
+  * Enabled PARTIAL_BODY_DOWNLOAD.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+34
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 18 Jan 2011 16:07:49 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+33) unstable; urgency=low
+
+  * Removed an unused feature, USE_PROPER_PROFILE_SELECTION
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+33
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 16 Dec 2010 11:17:05 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+32) unstable; urgency=low
+
+  * Bug fix on libuw-imap-toolkit-0.postinst
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+32
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 15 Dec 2010 12:25:35 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+31) unstable; urgency=low
+
+  * Using get_host_by_name instead of dnet functions.
+  * Git : 165.213.180.234:slp/pkgs/u/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+31
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 09 Dec 2010 15:13:08 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+30) unstable; urgency=low
+
+  * Build option tweak 
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+30
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 23 Nov 2010 15:12:41 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+29) unstable; urgency=low
+
+  * Fixed the problem on downloadnig body regarding parse address.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+29
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 10 Nov 2010 16:22:01 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+28) unstable; urgency=low
+
+  * Fixed the problem which set flag as seen on server when downloading is fixed.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+28 
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Thu, 04 Nov 2010 18:04:09 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+27) unstable; urgency=low
+
+  * Fixed the problem on using unhealthy stream.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+27
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 19 Oct 2010 16:40:46 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+26) unstable; urgency=low
+
+  * PARTIAL_BODY_DOWNLOAD
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+26
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 18 Oct 2010 16:54:43 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+25) unstable; urgency=low
+
+  * Getting dnet status by using net_is_connected.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+25
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 18 Oct 2010 14:02:44 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+24) unstable; urgency=low
+
+  * Removed using crypt funcion.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+24
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 13 Oct 2010 20:14:57 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+23) unstable; urgency=low
+
+  * version up
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+22
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 13 Oct 2010 17:12:56 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+22) unstable; urgency=low
+
+  * Send/Sync Optimized
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+22
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 13 Oct 2010 16:43:50 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+21) unstable; urgency=low
+
+  * Fixed problem on building for i386 
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+21
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Fri, 10 Sep 2010 22:11:38 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+20) unstable; urgency=low
+
+  * Removed using crypt function because it caused build break on i386.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+20
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 07 Sep 2010 14:24:53 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+19) unstable; urgency=low
+
+  * Removed using crypt function because it caused build break on i386.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+19
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 07 Sep 2010 14:20:23 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+18) unstable; urgency=low
+
+  * Removed using crypt function because it caused build break on i386.
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+18
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 07 Sep 2010 14:14:37 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+17) unstable; urgency=low
+
+  * Modify a dnet header file path
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+17
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 02 Sep 2010 13:54:50 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+16) unstable; urgency=low
+
+  * Rebuild for dnet change
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+16
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Fri, 20 Aug 2010 19:34:41 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+15) unstable; urgency=low
+
+  * Modify debian/control 
+  *  - Remove dlog-dev from libuw-imap-toolkit-0 package
+  *  - Add dlog-dev to libuw-imap-toolkit-dev package
+  * Git : 165.213.180.234:/git/slp/pkgs/uw-imap-toolkit
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+15
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 16 Aug 2010 14:59:25 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+14) unstable; urgency=low
+
+  * Rebuild because of dlog lib changing
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+14
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Fri, 25 Jun 2010 18:09:22 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+13) unstable; urgency=low
+
+  * Change error codes to negative values
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+13
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 21 Jun 2010 17:53:32 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+12) unstable; urgency=low
+
+  * Rebuild because of dlog lib changing
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+12
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Fri, 18 Jun 2010 09:37:12 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+11) unstable; urgency=low
+
+  * Change LOG_TAG for dlog
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+11
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 17 Jun 2010 10:40:02 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+10) unstable; urgency=low
+
+  * Change DLOG interface - Modify macros which are using dlog API
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+10
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 17 Jun 2010 10:00:41 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+9) unstable; urgency=low
+
+  * Rebuild because of dbus lib changing
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+9
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 14 Jun 2010 10:48:30 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+8) unstable; urgency=low
+
+  * Update for dnet change
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+8
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Fri, 04 Jun 2010 13:17:42 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+7) unstable; urgency=low
+
+  * Remove the codes which are related to _dnet_set_nework_status()
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+7
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Fri, 28 May 2010 20:20:09 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+6) unstable; urgency=low
+
+  * Add USING_ONLY_ONE_CONNECTION feature
+  * Add new parameter for net_cb_open_rsp()
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+6
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 26 May 2010 19:17:43 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+5) unstable; urgency=low
+
+  * Modifed debian/control
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+5
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 25 May 2010 20:03:30 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+4) unstable; urgency=low
+
+  * Rebuilding for DNET changes
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+4
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 28 Apr 2010 11:22:49 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+3) unstable; urgency=low
+
+  * Fix for CPU consumption 100%
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+3
+ 
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Sun, 25 Apr 2010 17:08:42 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+2) unstable; urgency=low
+
+  * Add the script for changing permission and owner
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+2
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Tue, 20 Apr 2010 15:24:35 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+1) unstable; urgency=low
+
+  * Modify to use TOP command for getting header from hotmail server(or the server which doesn't support CAPA command) instead of RETR command.
+  * Git: 165.213.180.234:/git/slp2.0/slp2.0-pkgs/uw-imap-toolkit-0
+  * Tag: uw-imap-toolkit_0.1.1-0slp2+1
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Tue, 06 Apr 2010 17:42:29 +0900
+
+uw-imap-toolkit (0.1.1-0slp2+0) unstable; urgency=low
+
+  * Toolchain Upgrade
+  * Adapt new version policy
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 25 Mar 2010 13:18:27 +0900
+
+uw-imap-toolkit (0.1.1-0) unstable; urgency=low
+
+  * 1. Increase timeout value of select() in resp_wait() from 60 sec to 180 (160 + a) sec
+  * 2. Return failure if # of serial profiles is 0 in the case of using SERIAL
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Tue, 23 Mar 2010 18:40:42 +0900
+
+uw-imap-toolkit (0.1.0-33) unstable; urgency=low
+
+  * Add mail_lookup_auth_name_smtp() to seperate from pop3
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 22 Mar 2010 19:06:34 +0900
+
+uw-imap-toolkit (0.1.0-32) unstable; urgency=low
+
+  * Modify _init_dnet_context() not to return error code which occurs if ret == false;
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 22 Mar 2010 10:22:56 +0900
+
+uw-imap-toolkit (0.1.0-31) unstable; urgency=low
+
+  * Modify the process related to select() in resp_wait
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 08 Mar 2010 19:56:39 +0900
+
+uw-imap-toolkit (0.1.0-30) unstable; urgency=low
+
+  * Rebuild for applying dlog and Fix select time out bug
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 04 Mar 2010 10:33:02 +0900
+
+uw-imap-toolkit (0.1.0-29) unstable; urgency=low
+
+  * Set timeout for waiting response from dnet
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 03 Mar 2010 17:35:42 +0900
+
+uw-imap-toolkit (0.1.0-28) unstable; urgency=low
+
+  * Modify smtp_challenge to treat a reply whose length is only 3.
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Tue, 23 Feb 2010 19:29:19 +0900
+
+uw-imap-toolkit (0.1.0-27) unstable; urgency=low
+
+  * Rollback to 0.1.0-25
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 23 Feb 2010 16:40:30 +0900
+
+uw-imap-toolkit (0.1.0-26) unstable; urgency=low
+
+  * Rollback to 0.1.0-23
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Tue, 23 Feb 2010 15:44:08 +0900
+
+uw-imap-toolkit (0.1.0-25) unstable; urgency=low
+
+  * Return error code for connection error
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Tue, 23 Feb 2010 11:50:20 +0900
+
+uw-imap-toolkit (0.1.0-24) unstable; urgency=low
+
+  * Modify debian/rules to delete auto created files
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 22 Feb 2010 19:14:21 +0900
+
+uw-imap-toolkit (0.1.0-23) unstable; urgency=low
+
+  * Fix a bug (email-service coyldn't connect AOL SMTP server) 
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Wed, 17 Feb 2010 11:15:59 +0900
+
+uw-imap-toolkit (0.1.0-22) unstable; urgency=low
+
+  * Print DNET profile type
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 03 Feb 2010 20:54:53 +0900
+
+uw-imap-toolkit (0.1.0-21) unstable; urgency=low
+
+  * Add USE_PROPER_PROFILE_SELECTION feature : To select dnet profile type
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 03 Feb 2010 12:31:21 +0900
+
+uw-imap-toolkit (0.1.0-20) unstable; urgency=low
+
+  * For DNET update
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Mon, 01 Feb 2010 10:12:51 +0900
+
+uw-imap-toolkit (0.1.0-19) unstable; urgency=low
+
+  * Fix : make _dnet_get_connection_status() return g_dnet_connection_status(), Remove dependency to drm-service
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 28 Jan 2010 09:25:10 +0900
+
+uw-imap-toolkit (0.1.0-18) unstable; urgency=low
+
+  * Separate NET_ERR_NONE and NET_ERR_ACTIVE_CONNECTION_EXISTS in _dnet_connection_open
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 27 Jan 2010 17:36:08 +0900
+
+uw-imap-toolkit (0.1.0-17) unstable; urgency=low
+
+  * Change API/header/define/... to new name
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Tue, 26 Jan 2010 20:37:15 +0900
+
+uw-imap-toolkit (0.1.0-16) unstable; urgency=low
+
+  * Add log for Handling exceptional error code, 'already connected'
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Mon, 25 Jan 2010 15:38:01 +0900
+
+uw-imap-toolkit (0.1.0-15) unstable; urgency=low
+
+  * Handling exceptional error code for 'already connected'.
+
+ -- Kyuho Jo <kyuho.jo@samsung.com>  Fri, 22 Jan 2010 23:56:02 +0900
+
+uw-imap-toolkit (0.1.0-14) unstable; urgency=low
+
+  * Change calling API from NetPMAppProfGetProperProfile to NetPMGetDefaultProfileId, Change debug log macro
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 20 Jan 2010 20:50:11 +0900
+
+uw-imap-toolkit (0.1.0-13) unstable; urgency=low
+
+  * Changed logging macro - minor change
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Thu, 14 Jan 2010 18:47:31 +0900
+
+uw-imap-toolkit (0.1.0-12) unstable; urgency=low
+
+  * small change - dlog
+
+ -- Choongho Lee <ch715.lee@samsung.com>  Wed, 13 Jan 2010 11:52:34 +0900
+
+uw-imap-toolkit (0.1.0-11) unstable; urgency=low
+
+  * Changed logging system to dlog
+
+ -- unknown <ch715.lee@samsung.com>  Mon, 11 Jan 2010 16:49:09 +0900
+
+uw-imap-toolkit (0.1.0-10) unstable; urgency=low
+
+  * disable logging
+
+ -- unknown <ch715.lee@samsung.com>  Mon, 04 Jan 2010 17:18:19 +0900
+
+uw-imap-toolkit (0.1.0-9) unstable; urgency=low
+
+  * Changed email data path from /opt/dbspace/ums/.email to /opt/.email temporarily
+
+ -- unknown <ch715.lee@samsung.com>  Mon, 04 Jan 2010 16:47:59 +0900
+
+uw-imap-toolkit (0.1.0-8) unstable; urgency=low
+
+  * Disable printf logging.
+
+ -- unknown <ch715.lee@samsung.com>  Mon, 04 Jan 2010 14:21:00 +0900
+
+uw-imap-toolkit (0.1.0-7) unstable; urgency=low
+
+  * Separated packages : uw-imap-toolkit-dev, uw-imap-toolkit-0
+
+ -- unknown <ch715.lee@samsung.com>  Fri, 18 Dec 2009 11:14:50 +0900
+
+uw-imap-toolkit (0.1.0-6) unstable; urgency=low
+
+  * Public Initial Release.
+
+ -- unknown <ch715.lee@samsung.com>  Thu, 17 Dec 2009 14:37:12 +0900
+
+uw-imap-toolkit (0.1.0-5) unstable; urgency=low
+
+  * modified imap-network.h
+
+ -- unknown <ch715.lee@samsung.com>  Wed, 16 Dec 2009 19:16:17 +0900
+
+uw-imap-toolkit (0.1.0-4) unstable; urgency=low
+
+  * added .so libraries
+
+ -- unknown <ch715.lee@samsung.com>  Wed, 16 Dec 2009 18:54:38 +0900
+
+uw-imap-toolkit (0.1.0-3) unstable; urgency=low
+
+  * modified some header files
+
+ -- unknown <ch715.lee@samsung.com>  Wed, 16 Dec 2009 18:18:32 +0900
+
+uw-imap-toolkit (0.1.0-2) unstable; urgency=low
+
+  * add uw-imap-toolkit.pc
+
+ -- unknown <ch715.lee@samsung.com>  Wed, 16 Dec 2009 17:55:43 +0900
+
+uw-imap-toolkit (0.1.0-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- unknown <ch715.lee@samsung.com>  Mon, 14 Dec 2009 17:36:32 +0900
