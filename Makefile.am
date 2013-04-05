@@ -64,7 +64,7 @@ pcfiles = uw-imap-toolkit.pc
 all: 
 all-local: $(pcfiles)
 
-%.pc: %.pc
+SUFFIXES: .pc
 	cp $< $@
 
 pkgconfigdir = $(libdir)/pkgconfig
