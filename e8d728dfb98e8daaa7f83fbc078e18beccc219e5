@@ -1,0 +1,8 @@
+Change-Id: Ie8d728dfb98e8daaa7f83fbc078e18beccc219e5
+Code-Review+2: Ryan Ware <ware@linux.intel.com>
+Verified+1: Ryan Ware <ware@linux.intel.com>
+Submitted-by: Ryan Ware <ware@linux.intel.com>
+Submitted-at: Mon, 08 Jul 2013 09:39:17 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4916
+Project: platform/upstream/uw-imap-toolkit
+Branch: refs/heads/tizen
