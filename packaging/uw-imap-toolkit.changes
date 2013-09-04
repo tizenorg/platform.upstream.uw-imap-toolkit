@@ -1,0 +1,6 @@
+* Wed Sep 04 2013 Maciej Wereski <m.wereski@partner.samsung.com> accepted/tizen/20130710.214435@b87a445
+- Fix RPMLINT errors
+- Fix manifests
+- resetting manifest requested domain to floor
+- Make it build with new automake
+- Tizen 2.1 base

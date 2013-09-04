@@ -7,8 +7,8 @@ Name:       uw-imap-toolkit
 Summary:    IMAP-2007e developed by University of Washington
 Version: 0.1.1
 Release:    0
-Group:      TO_BE/FILLED_IN
-License:    TO BE FILLED IN
+Group:      Messaging/Libraries
+License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1001:	libuw-imap-toolkit.manifest
 Source1002:	libuw-imap-toolkit-devel.manifest
@@ -24,7 +24,7 @@ IMAP-2007e run-time library for E-mail Framework
 
 %package -n libuw-imap-toolkit
 Summary:    IMAP-2007e developed by University of Washington
-Group:      TO_BE/FILLED_IN
+Group:      Messaging/Libraries
 
 %description -n libuw-imap-toolkit
 IMAP-2007e run-time library for E-mail Framework
@@ -32,7 +32,7 @@ IMAP-2007e run-time library for E-mail Framework
 
 %package -n libuw-imap-toolkit-devel
 Summary:    IMAP-2007e developed by University of Washington
-Group:      TO_BE/FILLED_IN
+Group:      Messaging/Development
 Requires:   libuw-imap-toolkit = %{version}-%{release}
 
 %description -n libuw-imap-toolkit-devel
