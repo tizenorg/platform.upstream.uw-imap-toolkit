@@ -17,6 +17,7 @@
   auth_link (&auth_md5);		/* link in the md5 authenticator */
   auth_link (&auth_pla);		/* link in the pla authenticator */
   auth_link (&auth_log);		/* link in the log authenticator */
+  auth_link (&auth_xoauth2);	/* link in the xoauth2 authenticator */
   mail_versioncheck (CCLIENTVERSION);
   ssl_onceonlyinit ();
   mail_parameters (NIL,SET_DISABLEPLAINTEXT,(void *) 2);

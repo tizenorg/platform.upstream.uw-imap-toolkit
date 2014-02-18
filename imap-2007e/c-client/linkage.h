@@ -17,3 +17,4 @@ extern AUTHENTICATOR auth_ext;
 extern AUTHENTICATOR auth_md5;
 extern AUTHENTICATOR auth_pla;
 extern AUTHENTICATOR auth_log;
+extern AUTHENTICATOR auth_xoauth2;

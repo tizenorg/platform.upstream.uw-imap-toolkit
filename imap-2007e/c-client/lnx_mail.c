@@ -154,30 +154,13 @@ char *tcp_getline_lnx (void *vstream)
 }
 #endif
 
-
 int try_auth = 0;
+int try_auth_smtp = 0;
+
 unsigned int mail_lookup_auth_name (char *mechanism,long flags)
 {
   int i;
   AUTHENTICATOR *auth;
-
-  if(!try_auth) return 0;
-
-  for (i = 1, auth = mailauthenticators; auth; i++, auth = auth->next)
-    if (auth->client && !(flags & ~auth->flags) &&
-	!compare_cstring (auth->name,mechanism))
-      return i;
-  return 0;
-}
-
-// 22-Mar-2010 added
-int try_auth_smtp = 0;
-unsigned int mail_lookup_auth_name_smtp (char *mechanism,long flags)
-{
-  int i;
-  AUTHENTICATOR *auth;
-
-  if(!try_auth_smtp) return 0;
 
   for (i = 1, auth = mailauthenticators; auth; i++, auth = auth->next)
     if (auth->client && !(flags & ~auth->flags) &&

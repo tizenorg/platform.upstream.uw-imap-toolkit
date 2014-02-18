@@ -249,7 +249,9 @@ SENDSTREAM *smtp_open_full (NETDRIVER *dv,char **hostlist,char *service,
 			 NETMAXHOST-1);
 		mb.host[NETMAXHOST-1] = '\0';
 	      }
-	      if (!smtp_auth (stream,&mb,tmp)) stream = smtp_close (stream);
+	      if(mb.auth_method > 0) {
+	    	  if (!smtp_auth (stream,&mb,tmp)) stream = smtp_close (stream);
+	      }
 	    }
 	    else {		/* no available authenticators? */
 	      sprintf (tmp,"%sSMTP authentication not available: %.80s", mb.secflag ? "Secure " : "",mb.host);
@@ -294,6 +296,9 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
   for (auths = ESMTP.auth, stream->saslcancel = NIL;
        !ret && stream->netstream && auths &&
        (at = mail_lookup_auth (find_rightmost_bit (&auths) + 1)); ) {
+
+    sprintf (tmp,"Trying using %s authentication. ", at->name);
+    mm_log (tmp,NIL);
     if (lsterr) {		/* previous authenticator failed? */
       sprintf (tmp,"Retrying using %s authentication after %.80s", at->name,lsterr);
       mm_log (tmp,NIL);
@@ -322,52 +327,6 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
 	}
 	stream->sensitive = NIL;/* unhide */
       }
-#if 1		// for smtp.web.de
-		else if (!strcmp(at->name, "PLAIN")) {
-			char* user = usr;
-			char pwd[MAILTMPLEN];
-			
-			pwd[0] = NIL;
-			mm_login(mb, user, pwd, trial);
-			
-			unsigned long rlen = strlen(mb->authuser) + strlen(user) + strlen(pwd) + 2;
-			char* response = (char*) fs_get(rlen);
-			char* t = response;
-			char* u;
-			
-			if (mb->authuser[0])
-				for (u =user; *u; *t++ = *u++);
-			
-			*t++ = '\0';
-			
-			for (u = (mb->authuser[0] ? mb->authuser : user); *u; *t++ = *u++);
-			
-			*t++ = '\0';
-			
-			for (u = pwd; *u; *t++ = *u++);
-			
-			unsigned long i, j;
-			
-			for (t = (char*) rfc822_binary(response, rlen, &i), u = t, j = 0; j < i; j++) {
-				if (t[j] > ' ') *u++ = t[j];
-			}
-			
-			*u = '\0';
-			
-			i = smtp_send(stream, "AUTH PLAIN", t);
-			
-			fs_give((void**)&t);
-			
-			memset(response, 0, rlen);
-			fs_give((void**)&response);
-			
-			if (i == SMTPAUTHED) {
-				ESMTP.auth = NIL;
-				ret = LONGT;
-			}
-			else if (!trial) mm_log("SMTP Authentication cancelled", ERROR);
-		}
-#endif
 	  /* remember response if error and no cancel */
       if (!ret && trial) lsterr = cpystr (stream->reply);
     } while (!ret && stream->netstream && trial &&
@@ -768,9 +727,8 @@ long smtp_ehlo (SENDSTREAM *stream,char *host,NETMBX *mb)
 	ESMTP.atrn.ok = T;
       }
       else if (!compare_cstring (s,"AUTH"))
-	//do if ((j = mail_lookup_auth_name (t,flags)) &&
-	do if ((j = mail_lookup_auth_name_smtp (t,flags)) &&		// 22-Mar-2010 Fix for SMTP Authorization issue - avoid race condition. change from 	mail_lookup_auth_name to mail_lookup_auth_name_smtp
-	       (--j < MAXAUTHENTICATORS)) ESMTP.auth |= (1 << j);
+	do if ((j = mail_lookup_auth_name (t,flags)) &&
+       (--j < MAXAUTHENTICATORS)) ESMTP.auth |= (1 << j);
 	while ((t = strtok_r (NIL," ",&r)) && *t);
     }
 				/* EHLO options which do not take arguments */
@@ -795,17 +753,12 @@ long smtp_ehlo (SENDSTREAM *stream,char *host,NETMBX *mb)
   }
   while ((i < 100) || (stream->reply[3] == '-'));
 				/* disable LOGIN if PLAIN also advertised */
-  // 22-Mar-2010 change from 	mail_lookup_auth_name to mail_lookup_auth_name_smtp
   /*
   if ((j = mail_lookup_auth_name ("PLAIN",NIL)) && (--j < MAXAUTHENTICATORS) &&
       (ESMTP.auth & (1 << j)) &&
       (j = mail_lookup_auth_name ("LOGIN",NIL)) && (--j < MAXAUTHENTICATORS))
     ESMTP.auth &= ~(1 << j);
-    */
-  if ((j = mail_lookup_auth_name_smtp ("PLAIN",NIL)) && (--j < MAXAUTHENTICATORS) &&
-      (ESMTP.auth & (1 << j)) &&
-      (j = mail_lookup_auth_name_smtp ("LOGIN",NIL)) && (--j < MAXAUTHENTICATORS))
-    ESMTP.auth &= ~(1 << j);
+   */
   return i;			/* return the response code */
 }
 

@@ -31,6 +31,7 @@ libuw_imap_toolkit_la_CPPFLAGS= -I. \
 			    -D__FEATURE_HEADER_OPTIMIZATION__ \
 			    -D__FEATURE_SEND_OPTMIZATION__ \
 			    -D__FEATURE_XLIST_SUPPORT__ \
+			    -D__FEATURE_SUPPORT_IMAP_ID__ \
 			    -DCREATEPROTO=unixproto -DEMPTYPROTO=unixproto \
 			    -DMAILSPOOL=\"/var/spool/mail\" \
 			    -DANONYMOUSHOME=\"/var/spool/mail/anonymous\" \

@@ -5,7 +5,7 @@
 
 Name:       uw-imap-toolkit
 Summary:    IMAP-2007e developed by University of Washington
-Version: 0.1.1
+Version:    0.1.2
 Release:    0
 Group:      Messaging/Libraries
 License:    Apache-2.0
@@ -54,6 +54,8 @@ make %{?jobs:-j%jobs}
 rm -rf %{buildroot}
 %make_install
 
+mkdir -p %{buildroot}/usr/share/license
+cp imap-2007e/LICENSE.txt %{buildroot}/usr/share/license/%{name}
 
 %post -n libuw-imap-toolkit -p /sbin/ldconfig
 
@@ -65,7 +67,7 @@ rm -rf %{buildroot}
 %manifest libuw-imap-toolkit.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libuw-imap-toolkit.so.*
-
+/usr/share/license/%{name}
 
 %files -n libuw-imap-toolkit-devel
 %manifest libuw-imap-toolkit-devel.manifest

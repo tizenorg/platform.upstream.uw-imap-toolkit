@@ -738,6 +738,13 @@ void rfc822_parse_adrlist (ADDRESS **lst,char *string,char *host)
       last = adr;		/* new tail address */
       if (string) {		/* analyze what follows */
 	rfc822_skipws (&string);
+
+	/* Recovery from failure on parsing */
+	if ( string != NULL) {
+		while (*string != ',' && *string != '\0')
+			string++;
+    }
+
 	switch (c = *(unsigned char *) string) {
 	case ',':		/* comma? */
 	  ++string;		/* then another address follows */
@@ -985,9 +992,11 @@ ADDRESS *rfc822_parse_routeaddr (char *string,char **ret,char *defaulthost)
     if (!**ret) *ret = NIL;	/* wipe pointer if at end of string */
     return adr;			/* return the address */
   }
-  sprintf (tmp,"Unterminated mailbox: %.80s@%.80s",adr->mailbox,
-	   *adr->host == '@' ? "<null>" : adr->host);
-  MM_LOG (tmp,PARSE);
+  if (adr) {
+	  sprintf (tmp,"Unterminated mailbox: %.80s@%.80s", (adr->mailbox == NULL) ? "<null>" : adr->mailbox,
+			  (adr->host == NULL || *adr->host == '@') ? "<null>" : adr->host);
+	  MM_LOG (tmp,PARSE);
+  }
   adr->next = mail_newaddr ();
   adr->next->mailbox = cpystr ("MISSING_MAILBOX_TERMINATOR");
   adr->next->host = cpystr (errhst);

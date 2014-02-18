@@ -401,7 +401,11 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
 				       TLSv1_client_method () :
 				       SSLv23_client_method ())))
     return "SSL context failed";
-  SSL_CTX_set_options (stream->context,0);
+  if (flags & NET_FORCE_LOWER_TLS_VERSION)
+  	SSL_CTX_set_options(stream->context, SSL_OP_NO_SSLv2|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
+  else
+    SSL_CTX_set_options (stream->context,0);
+
 				/* disable certificate validation? */
   if (flags & NET_NOVALIDATECERT)
     SSL_CTX_set_verify (stream->context,SSL_VERIFY_NONE,NIL);

@@ -39,6 +39,7 @@
 #include "c-client.h"
 #include "imap4r1.h"
 
+
 /* Parameters */
 
 #define IMAPLOOKAHEAD 20	/* envelope lookahead */
@@ -165,6 +166,9 @@ long imap_status (MAILSTREAM *stream,char *mbx,long flags);
 MAILSTREAM *imap_open (MAILSTREAM *stream);
 IMAPPARSEDREPLY *imap_rimap (MAILSTREAM *stream,char *service,NETMBX *mb,
 			     char *usr,char *tmp);
+#ifdef __FEATURE_SUPPORT_IMAP_ID__
+long imap_id (MAILSTREAM *stream);
+#endif /* __FEATURE_SUPPORT_IMAP_ID__ */
 long imap_anon (MAILSTREAM *stream,char *tmp);
 long imap_auth (MAILSTREAM *stream,NETMBX *mb,char *tmp,char *usr);
 long imap_login (MAILSTREAM *stream,NETMBX *mb,char *pwd,char *usr);
@@ -916,10 +920,20 @@ MAILSTREAM *imap_open (MAILSTREAM *stream)
 		   net_host (LOCAL->netstream),NETMAXHOST-1);
 	  mb.host[NETMAXHOST-1] = '\0';
 	}
+
+
+#ifdef __FEATURE_SUPPORT_IMAP_ID__
+	/* Process for IMAP ID */
+	if (LOCAL->cap.id) {
+		mm_log ("This server requires IMAP ID", WARN);
+		imap_id(stream);
+	}
+#endif /* __FEATURE_SUPPORT_IMAP_ID__ */
+
 				/* need new capabilities after login */
 	LOCAL->gotcapability = NIL;
 	if (!(stream->anonymous ? imap_anon (stream,tmp) :
-	      (LOCAL->cap.auth ? imap_auth (stream,&mb,tmp,usr) :
+	      ((LOCAL->cap.auth && (mb.auth_method > AUTH_METHOD_NONE))? imap_auth (stream,&mb,tmp,usr) :
 	       imap_login (stream,&mb,tmp,usr)))) {
 				/* failed, is there a referral? */
 	  if (ir && LOCAL->referral &&
@@ -1062,6 +1076,41 @@ IMAPPARSEDREPLY *imap_rimap (MAILSTREAM *stream,char *service,NETMBX *mb,
   }
   return NIL;
 }
+
+#ifdef __FEATURE_SUPPORT_IMAP_ID__
+long imap_id (MAILSTREAM *stream)
+{
+	IMAPPARSEDREPLY *reply;
+	int ret = NIL;
+	char *imap_id_tag_string = NULL;
+	IMAPARG *args[2];
+	IMAPARG id_tag;
+
+	if(stream == NULL)
+		return ret;
+
+	mm_imap_id (&imap_id_tag_string);
+
+	if(imap_id_tag_string != NULL) {
+		if(stream->debug)
+			mm_dlog(imap_id_tag_string);
+
+		id_tag.type = ASTRING;
+		id_tag.text = (void *) imap_id_tag_string;
+		args[0] = &id_tag; args[1] = NIL;
+		/* send "ID tag" */
+		if (imap_OK (stream,reply = imap_send (stream,"ID",args)))
+			ret = LONGT;		/* success */
+		else {
+			mm_log ("ID failed",ERROR);
+		}
+		free(imap_id_tag_string);
+	}
+
+	return ret;
+}
+#endif /* __FEATURE_SUPPORT_IMAP_ID__ */
+
 
 /* IMAP log in as anonymous
  * Accepts: stream to authenticate
@@ -1218,6 +1267,10 @@ long imap_login (MAILSTREAM *stream,NETMBX *mb,char *pwd,char *usr)
 	  ret = LONGT;		/* success */
 	else {
 	  mm_log (reply->text,WARN);
+	  if (reply->text && strstr(reply->text, "AUTHENTICATIONFAILED")) {
+		  mm_log ("Can not authenticate",ERROR);
+		  break;
+	  }
 	  if (!LOCAL->referral && (trial == imap_maxlogintrials))
 	    mm_log ("Too many login failures",ERROR);
 	}
@@ -4321,6 +4374,11 @@ void imap_parse_unsolicited (MAILSTREAM *stream,IMAPPARSEDREPLY *reply)
     else t = reply->text;
     mm_list (stream,NIL,t,NIL);
   }
+#ifdef __FEATURE_SUPPORT_IMAP_ID__
+  else if (!strcmp (reply->key,"ID")) {
+    imap_parse_id (stream,reply->text);
+  }
+#endif /* __FEATURE_SUPPORT_IMAP_ID__ */
   else {
     sprintf (LOCAL->tmp,"Unexpected untagged message: %.80s",
 	     (char *) reply->key);
@@ -4387,7 +4445,7 @@ void imap_parse_response (MAILSTREAM *stream,char *text,long errflg,long ntfy)
       }
 
       else if (!compare_cstring (t,"CAPABILITY"))
-	imap_parse_capabilities (stream,s);
+    	  imap_parse_capabilities (stream,s);
       else if ((j = LEVELUIDPLUS (stream) && LOCAL->appendmailbox) &&
 	       !compare_cstring (t,"COPYUID") &&
 	       (cu = (copyuid_t) mail_parameters (NIL,GET_COPYUID,NIL)) &&
@@ -5219,22 +5277,24 @@ void imap_parse_body_structure (MAILSTREAM *stream,BODY *body,
 	stream->unhealthy = T;
 	body->subtype = cpystr (rfc822_default_subtype (body->type));
       }
-      if (**txtptr == ' ')	/* multipart parameters */
+      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* multipart parameters */
 	body->parameter = imap_parse_body_parameter (stream,txtptr,reply);
-      if (**txtptr == ' ') {	/* disposition */
+      }
+      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* disposition */
 	imap_parse_disposition (stream,body,txtptr,reply);
 	if (LOCAL->cap.extlevel < BODYEXTDSP) LOCAL->cap.extlevel = BODYEXTDSP;
       }
-      if (**txtptr == ' ') {	/* language */
+      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* language */
 	body->language = imap_parse_language (stream,txtptr,reply);
 	if (LOCAL->cap.extlevel < BODYEXTLANG)
 	  LOCAL->cap.extlevel = BODYEXTLANG;
       }
-      if (**txtptr == ' ') {	/* location */
+      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* location */
 	body->location = imap_parse_string (stream,txtptr,reply,NIL,NIL,LONGT);
 	if (LOCAL->cap.extlevel < BODYEXTLOC) LOCAL->cap.extlevel = BODYEXTLOC;
       }
-      while (**txtptr == ' ') imap_parse_extension (stream,txtptr,reply);
+      while (**txtptr == ' ' && *((*txtptr)+ 1) != ')') imap_parse_extension (stream,txtptr,reply);
+      while ((c = **txtptr) == ' ') ++*(txtptr);
       if (**txtptr != ')') {	/* validate ending */
 	sprintf (LOCAL->tmp,"Junk at end of multipart body: %.80s",
 		 (char *) *txtptr);
@@ -5313,20 +5373,20 @@ void imap_parse_body_structure (MAILSTREAM *stream,BODY *body,
 	break;
       }
 
-      if (**txtptr == ' ') {	/* extension data - md5 */
+      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* extension data - md5 */
 	body->md5 = imap_parse_string (stream,txtptr,reply,NIL,NIL,LONGT);
 	if (LOCAL->cap.extlevel < BODYEXTMD5) LOCAL->cap.extlevel = BODYEXTMD5;
       }
-      if (**txtptr == ' ') {	/* disposition */
+      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* disposition */
 	imap_parse_disposition (stream,body,txtptr,reply);
 	if (LOCAL->cap.extlevel < BODYEXTDSP) LOCAL->cap.extlevel = BODYEXTDSP;
       }
-      if (**txtptr == ' ') {	/* language */
+      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* language */
 	body->language = imap_parse_language (stream,txtptr,reply);
 	if (LOCAL->cap.extlevel < BODYEXTLANG)
 	  LOCAL->cap.extlevel = BODYEXTLANG;
       }
-      if (**txtptr == ' ') {	/* location */
+      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* location */
 	body->location = imap_parse_string (stream,txtptr,reply,NIL,NIL,LONGT);
 	if (LOCAL->cap.extlevel < BODYEXTLOC) LOCAL->cap.extlevel = BODYEXTLOC;
       }
@@ -5642,6 +5702,16 @@ void imap_parse_capabilities (MAILSTREAM *stream,char *t)
       (LOCAL->cap.auth & (1 << i)) &&
       (i = mail_lookup_auth_name ("LOGIN",NIL)) && (--i < MAXAUTHENTICATORS))
     LOCAL->cap.auth &= ~(1 << i);
+}
+
+/* IMAP parse id
+ * Accepts: MAIL stream
+ *	    reply
+ */
+
+void imap_parse_id (MAILSTREAM *stream,char *t)
+{
+  /* If ID information from host is needed, add parser here */
 }
 
 /* IMAP load cache
