@@ -48,6 +48,7 @@ cp %{SOURCE1001} %{SOURCE1002} .
 
 
 make %{?jobs:-j%jobs}
+find -name '*.pc' -exec sed -i -e 's/\$version/%{version}/g' {} \;
 
 
 %install
