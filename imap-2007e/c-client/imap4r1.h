@@ -93,6 +93,9 @@ typedef struct imap_cap {
 #ifdef __FEATURE_XLIST_SUPPORT__
   unsigned int xlist : 1;
 #endif /* __FEATURE_XLIST_SUPPORT__ */
+#ifdef __FEATURE_METADATA_SUPPORT__
+  unsigned int metadata : 1;
+#endif /* __FEATURE_METADATA_SUPPORT__ */
 } IMAPCAP;
 
 /* IMAP4rev1 level or better */
@@ -249,6 +252,14 @@ typedef struct imap_cap {
 /* Has WITHIN extension */
 
 #define LEVELWITHIN(stream) imap_cap (stream)->within
+
+
+#ifdef __FEATURE_METADATA_SUPPORT__
+/* Has METADATA extension */
+
+#define LEVELMETADATA(stream) imap_cap (stream)->metadata
+#endif /* __FEATURE_METADATA_SUPPORT__ */
+
 
 /* Body structure extension levels */
 
@@ -282,3 +293,9 @@ long imap_myrights (MAILSTREAM *stream,char *mailbox);
 long imap_setquota (MAILSTREAM *stream,char *qroot,STRINGLIST *limits);
 long imap_getquota (MAILSTREAM *stream,char *qroot);
 long imap_getquotaroot (MAILSTREAM *stream,char *mailbox);
+
+#ifdef __FEATURE_METADATA_SUPPORT__
+/* RFC5464 - METADATA extension */
+char *imap_getmetadata (MAILSTREAM *stream, char *mailbox, char *entry);
+long imap_setmetadata (MAILSTREAM *stream, char *mailbox, char *entry, char *value);
+#endif /* __FEATURE_METADATA_SUPPORT__ */

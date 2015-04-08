@@ -217,7 +217,7 @@ void *mm_cache (MAILSTREAM *stream,unsigned long msgno,long op)
     stream->sc[i] = NIL;
     break;
   default:
-    fatal ("Bad mm_cache op");
+    MM_FATAL("Bad mm_cache op");
     break;
   }
   return ret;
@@ -328,24 +328,28 @@ void *mail_parameters (MAILSTREAM *stream,long function,void *value)
   AUTHENTICATOR *a;
   switch ((int) function) {
   case SET_INBOXPATH:
-    fatal ("SET_INBOXPATH not permitted");
+    MM_FATAL ("SET_INBOXPATH not permitted");
+    return NULL;
   case GET_INBOXPATH:
     if ((stream || (stream = mail_open (NIL,"INBOX",OP_PROTOTYPE))) &&
 	stream->dtb) ret = (*stream->dtb->parameters) (function,value);
     break;
   case SET_THREADERS:
-    fatal ("SET_THREADERS not permitted");
+    MM_FATAL ("SET_THREADERS not permitted");
+    return NULL;
   case GET_THREADERS:		/* use stream dtb instead of global */
     ret = (stream && stream->dtb) ?
 				/* KLUDGE ALERT: note stream passed as value */
       (*stream->dtb->parameters) (function,stream) : (void *) &mailthreadlist;
     break;
   case SET_NAMESPACE:
-    fatal ("SET_NAMESPACE not permitted");
-    break;
+    MM_FATAL ("SET_NAMESPACE not permitted");
+    return NULL;
   case SET_NEWSRC:		/* too late on open stream */
-    if (stream && stream->dtb && (stream != ((*stream->dtb->open) (NIL))))
-      fatal ("SET_NEWSRC not permitted");
+    if (stream && stream->dtb && (stream != ((*stream->dtb->open) (NIL)))) {
+      MM_FATAL ("SET_NEWSRC not permitted");
+      return NULL;
+    }
     else ret = env_parameters (function,value);
     break;
   case GET_NAMESPACE:
@@ -356,24 +360,31 @@ void *mail_parameters (MAILSTREAM *stream,long function,void *value)
 	env_parameters (function,value);
     break;
   case ENABLE_DEBUG:
-    fatal ("ENABLE_DEBUG not permitted");
+    MM_FATAL ("ENABLE_DEBUG not permitted");
+    return NULL;
   case DISABLE_DEBUG:
-    fatal ("DISABLE_DEBUG not permitted");
+    MM_FATAL ("DISABLE_DEBUG not permitted");
+    return NULL;
   case SET_DIRFMTTEST:
-    fatal ("SET_DIRFMTTEST not permitted");
+    MM_FATAL ("SET_DIRFMTTEST not permitted");
+    return NULL;
   case GET_DIRFMTTEST:
     if (!(stream && stream->dtb &&
-	  (ret = (*stream->dtb->parameters) (function,NIL))))
-      fatal ("GET_DIRFMTTEST not permitted");
+	  (ret = (*stream->dtb->parameters) (function,NIL)))) {
+      MM_FATAL ("GET_DIRFMTTEST not permitted");
+      return NULL;
+    }
     break;
 
   case SET_DRIVERS:
-    fatal ("SET_DRIVERS not permitted");
+    MM_FATAL ("SET_DRIVERS not permitted");
+    return NULL;
   case GET_DRIVERS:		/* always return global */
     ret = (void *) maildrivers;
     break;
   case SET_DRIVER:
-    fatal ("SET_DRIVER not permitted");
+    MM_FATAL ("SET_DRIVER not permitted");
+    return NULL;
   case GET_DRIVER:
     for (d = maildrivers; d && compare_cstring (d->name,(char *) value);
 	 d = d->next);
@@ -636,7 +647,10 @@ void *mail_parameters (MAILSTREAM *stream,long function,void *value)
       if (stream->snarf.name) fs_give ((void **) &stream->snarf.name);
       stream->snarf.name = cpystr ((char *) value);
     }
-    else fatal ("SET_SNARFMAILBOXNAME with no stream");
+    else {
+    	MM_FATAL ("SET_SNARFMAILBOXNAME with no stream");
+    	return NULL;
+    }
   case GET_SNARFMAILBOXNAME:
     if (stream) ret = (void *) stream->snarf.name;
     break;
@@ -1265,8 +1279,8 @@ MAILSTREAM *mail_open (MAILSTREAM *stream,char *name,long options)
     d = mail_valid (NIL,name,(options & OP_SILENT) ?
 		    (char *) NIL : "open mailbox");
   }
-  if (d)
-    return mail_open_work (d,stream,name,options);
+  if(d)
+	  return mail_open_work (d,stream,name,options);
 
   return stream;
 }
@@ -1284,7 +1298,7 @@ MAILSTREAM *mail_open_work (DRIVER *d,MAILSTREAM *stream,char *name,
 {
   int i;
   char tmp[MAILTMPLEN];
-  char *local_mailbox_name = NIL;
+  char *local_mailbox_name = NULL;
   NETMBX mb;
   if (options & OP_PROTOTYPE) return (*d->open) (NIL);
   /* name is copied here in case the caller does a re-open using
@@ -1361,12 +1375,13 @@ MAILSTREAM *mail_close_full (MAILSTREAM *stream,long options)
   int i;
   char tmp[MAILTMPLEN] = { 0, };
   if (stream) {			/* make sure argument given */
-	snprintf (tmp, MAILTMPLEN, "Checking 'unhealthy' flag of MAILSTEAM.. [%d]", stream->unhealthy);
-	MM_LOG (tmp,(long)WARN);
-	if(stream->unhealthy)
-		return NIL;
+    if(stream->unhealthy) {
+      snprintf (tmp, MAILTMPLEN, "Checking 'unhealthy' flag of MAILSTEAM.. [%d]", stream->unhealthy);
+      MM_LOG (tmp,(long)WARN);
+      return NIL;
+    }
 	/* do the driver's close action */
-    if (stream->dtb) (*stream->dtb->close) (stream,options);
+    if (stream->dtb && stream->dtb->close) (*stream->dtb->close) (stream,options);
     stream->dtb = NIL;		/* resign driver */
     if (stream->mailbox) fs_give ((void **) &stream->mailbox);
     if (stream->original_mailbox)
@@ -1442,7 +1457,8 @@ MESSAGECACHE *mail_elt (MAILSTREAM *stream,unsigned long msgno)
     char tmp[MAILTMPLEN];
     sprintf (tmp,"Bad msgno %lu in mail_elt, nmsgs = %lu, mbx=%.80s",
 	     msgno,stream->nmsgs,stream->mailbox ? stream->mailbox : "???");
-    fatal (tmp);
+    MM_FATAL (tmp);
+    return NULL;
   }
   return (MESSAGECACHE *) (*mailcache) (stream,msgno,CH_MAKEELT);
 }
@@ -2085,7 +2101,10 @@ long mail_partial_text (MAILSTREAM *stream,unsigned long msgno,char *section,
   BODY *b;
   char tmp[MAILTMPLEN];
   unsigned long i;
-  if (!mailgets) fatal ("mail_partial_text() called without a mailgets!");
+  if (!mailgets) {
+	  MM_FATAL ("mail_partial_text() called without a mailgets!");
+	  return NIL;
+  }
   if (section && (strlen (section) > (MAILTMPLEN - 20))) return NIL;
   if (flags & FT_UID) {		/* UID form of call */
     if (msgno = mail_msgno (stream,msgno)) flags &= ~FT_UID;
@@ -2156,7 +2175,10 @@ long mail_partial_body (MAILSTREAM *stream,unsigned long msgno,char *section,
   unsigned long i;
   if (!(section && *section))	/* top-level text wanted? */
     return mail_partial_text (stream,msgno,NIL,first,last,flags);
-  if (!mailgets) fatal ("mail_partial_body() called without a mailgets!");
+  if (!mailgets) {
+	  MM_FATAL ("mail_partial_body() called without a mailgets!");
+	  return NIL;
+  }
   if (flags & FT_UID) {		/* UID form of call */
     if (msgno = mail_msgno (stream,msgno)) flags &= ~FT_UID;
     else return NIL;		/* must get UID/msgno map first */
@@ -2604,9 +2626,9 @@ long mail_copy_full (MAILSTREAM *stream,char *sequence,char *mailbox,
 /* Append data package to use for old single-message mail_append() interface */
 
 typedef struct mail_append_package {
-  char *flags;			/* initial flags */
-  char *date;			/* message internal date */
-  STRING *message;		/* stringstruct of message */
+	char *flags;			/* initial flags */
+	char *date;			/* message internal date */
+	STRING *message;		/* stringstruct of message */
 } APPENDPACKAGE;
 
 
@@ -2630,6 +2652,39 @@ static long mail_append_single (MAILSTREAM *stream,void *data,char **flags,
   return LONGT;			/* always return success */
 }
 
+static long mail_append_single_command (MAILSTREAM *stream,void *data,char **flags,
+				char **date,STRING **message)
+{
+  APPENDPACKAGE *ap = (APPENDPACKAGE *) data;
+  *flags = ap->flags;		/* get desired data from the package */
+  *date = ap->date;
+  *message = ap->message;
+  ap->message = NIL;		/* so next callback puts a stop to it */
+  return 2;			/* always return success */
+}
+
+static long mail_append_single_message (MAILSTREAM *stream,void *data,char **flags,
+				char **date,STRING **message)
+{
+  APPENDPACKAGE *ap = (APPENDPACKAGE *) data;
+  *flags = ap->flags;		/* get desired data from the package */
+  *date = ap->date;
+  *message = ap->message;
+  ap->message = NIL;		/* so next callback puts a stop to it */
+  return 3;			/* always return success */
+}
+
+static long mail_append_single_end (MAILSTREAM *stream,void *data,char **flags,
+				char **date,STRING **message)
+{
+  APPENDPACKAGE *ap = (APPENDPACKAGE *) data;
+  *flags = ap->flags;		/* get desired data from the package */
+  *date = ap->date;
+  *message = ap->message;
+  ap->message = NIL;		/* so next callback puts a stop to it */
+  return 4;			/* always return success */
+}
+
 
 /* Mail append message string
  * Accepts: mail stream
@@ -2649,7 +2704,34 @@ long mail_append_full (MAILSTREAM *stream,char *mailbox,char *flags,char *date,
   ap.message = message;
   return mail_append_multiple (stream,mailbox,mail_append_single,(void *) &ap);
 }
-
+
+long mail_append_command (MAILSTREAM *stream,char *mailbox,char *flags,char *date, STRING *message)
+{
+  APPENDPACKAGE ap;
+  ap.flags = flags;		/* load append package */
+  ap.date = date;
+  ap.message = message;
+  return mail_append_multiple (stream,mailbox,mail_append_single_command,(void *) &ap);
+}
+
+long mail_append_message (MAILSTREAM *stream,char *mailbox,STRING *message)
+{
+  APPENDPACKAGE ap;
+  ap.flags = NULL;
+  ap.date = NULL;
+  ap.message = message;
+  return mail_append_multiple (stream,mailbox,mail_append_single_message,(void *) &ap);
+}
+
+long mail_append_end (MAILSTREAM *stream,char *mailbox)
+{
+  APPENDPACKAGE ap;
+  ap.flags = NULL;
+  ap.date = NULL;
+  ap.message = NULL;
+  return mail_append_multiple (stream,mailbox,mail_append_single_end,(void *) &ap);
+}
+
 /* Mail append message(s)
  * Accepts: mail stream
  *	    destination mailbox
@@ -2658,52 +2740,53 @@ long mail_append_full (MAILSTREAM *stream,char *mailbox,char *flags,char *date,
  * Returns: T on success, NIL on failure
  */
 
-long mail_append_multiple (MAILSTREAM *stream,char *mailbox,append_t af,
-			   void *data)
+long mail_append_multiple (MAILSTREAM *stream,char *mailbox,append_t af,void *data)
 {
-  char *s,tmp[MAILTMPLEN];
-  DRIVER *d = NIL;
-  long ret = NIL;
-				/* never allow names with newlines */
-  if (strpbrk (mailbox,"\015\012"))
-    MM_LOG ("Can't append to mailbox with such a name",ERROR);
-  else if (strlen (mailbox) >=
-	   (NETMAXHOST+(NETMAXUSER*2)+NETMAXMBX+NETMAXSRV+50)) {
-    sprintf (tmp,"Can't append %.80s: %s",mailbox,(*mailbox == '{') ?
-	     "invalid remote specification" : "no such mailbox");
-    MM_LOG (tmp,ERROR);
-  }
-				/* special driver hack? */
-  else if (!strncmp (lcase (strcpy (tmp,mailbox)),"#driver.",8)) {
-				/* yes, tie off name at likely delimiter */
-    if (!(s = strpbrk (tmp+8,"/\\:"))) {
-      sprintf (tmp,"Can't append to mailbox %.80s: bad driver syntax",mailbox);
-      MM_LOG (tmp,ERROR);
-      return NIL;
-    }
-    *s++ = '\0';		/* tie off at delimiter */
-    if (!(d = (DRIVER *) mail_parameters (NIL,GET_DRIVER,tmp+8))) {
-      sprintf (tmp,"Can't append to mailbox %.80s: unknown driver",mailbox);
-      MM_LOG (tmp,ERROR);
-    }
-    else ret = SAFE_APPEND (d,stream,mailbox + (s - tmp),af,data);
-  }
-  else if (d = mail_valid (stream,mailbox,NIL))
-    ret = SAFE_APPEND (d,stream,mailbox,af,data);
-  /* No driver, try for TRYCREATE if no stream.  Note that we use the
-   * createProto here, not the appendProto, since the dummy driver already
-   * took care of the appendProto case.  Otherwise, if appendProto is set to
-   * NIL, we won't get a TRYCREATE.
-   */
-  else if (!stream && (stream = default_proto (NIL)) && stream->dtb &&
-	   SAFE_APPEND (stream->dtb,stream,mailbox,af,data))
-				/* timing race? */
-    MM_NOTIFY (stream,"Append validity confusion",WARN);
-				/* generate error message */
-  else mail_valid (stream,mailbox,"append to mailbox");
-  return ret;
+	char *s,tmp[MAILTMPLEN];
+	DRIVER *d = NIL;
+	long ret = NIL;
+
+	/* never allow names with newlines */
+	if (strpbrk (mailbox,"\015\012"))
+		MM_LOG ("Can't append to mailbox with such a name",ERROR);
+	else if (strlen (mailbox) >= (NETMAXHOST+(NETMAXUSER*2)+NETMAXMBX+NETMAXSRV+50)) {
+		sprintf (tmp,"Can't append %.80s: %s",mailbox,(*mailbox == '{') ? "invalid remote specification" : "no such mailbox");
+		MM_LOG (tmp,ERROR);
+	}
+	/* special driver hack? */
+	else if (!strncmp (lcase (strcpy (tmp,mailbox)),"#driver.",8)) {
+		/* yes, tie off name at likely delimiter */
+		if (!(s = strpbrk (tmp+8,"/\\:"))) {
+			sprintf (tmp,"Can't append to mailbox %.80s: bad driver syntax",mailbox);
+			MM_LOG (tmp,ERROR);
+			return NIL;
+		}
+		*s++ = '\0';		/* tie off at delimiter */
+
+		if (!(d = (DRIVER *) mail_parameters (NIL,GET_DRIVER,tmp+8))) {
+			sprintf (tmp,"Can't append to mailbox %.80s: unknown driver",mailbox);
+			MM_LOG (tmp,ERROR);
+		} else
+			ret = SAFE_APPEND (d,stream,mailbox + (s - tmp),af,data);
+	}
+	else if (d = mail_valid (stream,mailbox,NIL))
+		ret = SAFE_APPEND (d,stream,mailbox,af,data);
+	/* No driver, try for TRYCREATE if no stream.  Note that we use the
+	* createProto here, not the appendProto, since the dummy driver already
+	* took care of the appendProto case.  Otherwise, if appendProto is set to
+	* NIL, we won't get a TRYCREATE.
+	*/
+	else if (!stream && (stream = default_proto (NIL)) && stream->dtb && SAFE_APPEND (stream->dtb,stream,mailbox,af,data))
+		/* timing race? */
+		MM_NOTIFY (stream,"Append validity confusion",WARN);
+		/* generate error message */
+
+	else
+		mail_valid (stream,mailbox,"append to mailbox");
+
+	return ret;
 }
-
+
 /* Mail garbage collect stream
  * Accepts: mail stream
  *	    garbage collection flags
@@ -3276,7 +3359,7 @@ void mail_lock (MAILSTREAM *stream)
     char tmp[MAILTMPLEN];
     sprintf (tmp,"Lock when already locked, mbx=%.80s",
 	     stream->mailbox ? stream->mailbox : "???");
-    fatal (tmp);
+    MM_FATAL (tmp);
   }
   else stream->lock = T;	/* lock stream */
 }
@@ -3288,7 +3371,7 @@ void mail_lock (MAILSTREAM *stream)
  
 void mail_unlock (MAILSTREAM *stream)
 {
-  if (!stream->lock) fatal ("Unlock when not locked");
+  if (!stream->lock) MM_FATAL ("Unlock when not locked");
   else stream->lock = NIL;	/* unlock stream */
 }
 
@@ -4019,7 +4102,8 @@ char *mail_search_gets (readfn_t f,void *stream,unsigned long size,
     sprintf (tmp,"Search botch, mbx = %.80s, %s = %lu[%.80s]",
 	     md->stream->mailbox,
 	     (md->flags & FT_UID) ? "UID" : "msg",md->msgno,md->what);
-    fatal (tmp);
+    MM_FATAL (tmp);
+    return NIL;
   }
 				/* initially no match for search */
   md->stream->private.search.result = NIL;
@@ -4090,6 +4174,10 @@ SEARCHPGM *mail_criteria (char *criteria)
 	else if (!strcmp (criterion+1,"ROM"))
 	  f = mail_criteria_string (&pgm->from,&r);
 	break;
+      case 'H':                 /* possible HEADER */
+	if (!strcmp (criterion+1,"EADER"))
+          f = mail_criteria_header_string (&pgm->header, &r);
+        break;
       case 'K':			/* possible KEYWORD */
 	if (!strcmp (criterion+1,"EYWORD"))
 	  f = mail_criteria_string (&pgm->keyword,&r);
@@ -4170,6 +4258,25 @@ int mail_criteria_date (unsigned short *date,char **r)
  *	    day
  * Returns: shortdate
  */
+
+int mail_criteria_header_string(SEARCHHEADER **hdr, char **r)
+{
+  unsigned long line_n, text_n;
+  char e,*d,*end = " ",*c = strtok_r (NIL,"",r);
+  char *line, *text;
+  if (!c) return NIL;
+  
+  if (line = strtok_r (c,end,r)) line_n = strlen (line);
+  else return NIL;
+
+  if (text = strtok_r (NIL,end,r)) text_n = strlen (text);
+  else return NIL;
+
+  while (*hdr) hdr = &(*hdr)->next;
+  *hdr = mail_newsearchheader(line, text);
+
+  return T;
+}
 
 unsigned short mail_shortdate (unsigned int year,unsigned int month,
 			       unsigned int day)
@@ -4569,7 +4676,8 @@ SORTCACHE **mail_sort_loadcache (MAILSTREAM *stream,SORTPGM *pgm)
 	}
 	break;
       default:
-	fatal ("Unknown sort function");
+	MM_FATAL ("Unknown sort function");
+	return NIL;
       }
     }
   return sc;
@@ -4896,7 +5004,10 @@ THREADNODE *mail_thread_orderedsubject (MAILSTREAM *stream,char *charset,
       tc = (THREADNODE **) fs_get (i * sizeof (THREADNODE *));
 				/* load threadnode cache */
       for (j = 0, cur = thr; cur; cur = cur->branch) tc[j++] = cur;
-      if (i != j) fatal ("Threadnode cache confusion");
+      if (i != j) {
+    	  MM_FATAL ("Threadnode cache confusion");
+    	  return NIL;
+      }
       qsort ((void *) tc,i,sizeof (THREADNODE *),mail_thread_compare_date);
       for (j = 0, --i; j < i; j++) tc[j]->branch = tc[j+1];
       tc[j]->branch = NIL;	/* end of root */
@@ -6356,6 +6467,7 @@ long net_getbuffer (void *st,unsigned long size,char *buffer)
 
 long net_soutr (NETSTREAM *stream,char *string)
 {
+  if (!stream) return NIL;
   return (*stream->dtb->soutr) (stream->stream,string);
 }
 
@@ -6369,6 +6481,7 @@ long net_soutr (NETSTREAM *stream,char *string)
 
 long net_sout (NETSTREAM *stream,char *string,unsigned long size)
 {
+  if (!stream) return NIL;
   return (*stream->dtb->sout) (stream->stream,string,size);
 }
 
@@ -6378,6 +6491,7 @@ long net_sout (NETSTREAM *stream,char *string,unsigned long size)
 
 void net_close (NETSTREAM *stream)
 {
+  if (!stream) return;
   if (stream->stream) (*stream->dtb->close) (stream->stream);
   fs_give ((void **) &stream);
 }

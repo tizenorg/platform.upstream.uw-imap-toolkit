@@ -3,12 +3,13 @@
 
 AC_PREREQ(2.61)
 AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
-AM_INIT_AUTOMAKE(subdir-objects -Wall -Werror foreign)
+AM_INIT_AUTOMAKE(-Wall -Werror foreign)
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 
 # Checks for programs.
-ifdef([AM_PROG_AR], [AM_PROG_AR])
+m4_pattern_allow([AM_PROG_AR])
+AM_PROG_AR
 AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_INSTALL

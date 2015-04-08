@@ -22,7 +22,6 @@
 
 
 #include "mail.c"
-//#include "em-core-utils.h"
 #include <errno.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -43,14 +42,15 @@
 
 #include "tcp_unix.h"
 
+#define RETRY_COUNT_LIMITATION 3
 
-long 
-tcp_getdata_lnx(TCPSTREAM* stream)
+long tcp_getdata_lnx(TCPSTREAM* stream)
 {
 	struct timeval tmout;
 	fd_set readfds;
 	int nread, sret, sockid, maxfd;
-	int max_timeout = 0;
+	int retry_count = 0;
+	long ttmo_read = (long) mail_parameters (NIL, GET_READTIMEOUT, NIL);
 	
 	sockid = stream->tcpsi;
 	maxfd = sockid + 1;
@@ -59,8 +59,8 @@ tcp_getdata_lnx(TCPSTREAM* stream)
 	
 	while (stream->ictr < 1) 
 	{
-		tmout.tv_usec = 0;//1000*10;
-		tmout.tv_sec = 1;
+		tmout.tv_usec = 0;
+		tmout.tv_sec  = ttmo_read ? ttmo_read : 5;
 		
 		FD_ZERO(&readfds);
 		FD_SET(sockid, &readfds);
@@ -72,27 +72,25 @@ tcp_getdata_lnx(TCPSTREAM* stream)
 			return false;
 		}
 		else if (!sret) {
-			if (max_timeout >= 50) {
-				IMAP_DEBUG_EXCEPTION("max select timeout %d", max_timeout);
-				
-				//em_core_set_network_error(EMF_ERROR_NO_RESPONSE);
+			if (retry_count >= RETRY_COUNT_LIMITATION) {
+				IMAP_DEBUG_EXCEPTION("retry_count exceeded limitation", retry_count);
 				return false;
 			}
 			
-			IMAP_DEBUG_EXCEPTION("%d select timeout", max_timeout);
+			IMAP_DEBUG_EXCEPTION("retry_count [%d]", retry_count);
 			
-			++max_timeout;
+			++retry_count;
 			continue;
 		}
 		
 		if ((nread = read(sockid, stream->ibuf, BUFLEN)) < 0) {
-			IMAP_DEBUG_EXCEPTION("\t socket read failed...\n");
+			IMAP_DEBUG_EXCEPTION("socket read failed...");
 			tcp_abort(stream);
 			return false;
 		}
 		
 		if (!nread) {
-			IMAP_DEBUG_EXCEPTION("\t socket read no data...\n");
+			IMAP_DEBUG_EXCEPTION("socket read empty data...");
 			tcp_abort(stream);
 			return false;
 		}
@@ -153,9 +151,6 @@ char *tcp_getline_lnx (void *vstream)
 	return ret;
 }
 #endif
-
-int try_auth = 0;
-int try_auth_smtp = 0;
 
 unsigned int mail_lookup_auth_name (char *mechanism,long flags)
 {

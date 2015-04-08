@@ -150,7 +150,7 @@ void *tcp_parameters (long function,void *value)
 
 TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
 {
-	mm_log("tcp_open - begin", NIL);
+	MM_LOG("tcp_open - begin", NIL);
   TCPSTREAM *stream = NIL;
   int family;
   int sock = -1;
@@ -177,7 +177,7 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
     if (adr = ip_stringtoaddr (tmp,&adrlen,&family)) {
       (*bn) (BLOCK_TCPOPEN,NIL);
 				/* get an open socket for this system */
-      mm_log("tcp_open - Before calling tcp_socket_open", NIL);
+      MM_LOG("tcp_open - Before calling tcp_socket_open", NIL);
       sock = tcp_socket_open (family,adr,adrlen,port,tmp,ctrp,hostname = host);
       (*bn) (BLOCK_NONE,NIL);
       fs_give ((void **) &adr);
@@ -187,7 +187,7 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
   else {			/* lookup host name */
     if (tcpdebug) {
       sprintf (tmp,"DNS resolution %.80s",host);
-      mm_log (tmp,TCPDEBUG);
+      MM_LOG (tmp,TCPDEBUG);
     }
     (*bn) (BLOCK_DNSLOOKUP,NIL);/* quell alarms */
     data = (*bn) (BLOCK_SENSITIVE,NIL);
@@ -196,15 +196,16 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
     (*bn) (BLOCK_NONSENSITIVE,data);
     (*bn) (BLOCK_NONE,NIL);
     if (s) {			/* DNS resolution won? */
-      if (tcpdebug) mm_log ("DNS resolution done",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("DNS resolution done",TCPDEBUG);
+      int retry_all_addr = 0; /* if you want to try all ip addresses, set it */
       do {
         (*bn) (BLOCK_TCPOPEN,NIL);
         if (((sock = tcp_socket_open (family,s,adrlen,port,tmp,ctrp,
           hostname)) < 0) &&
           (s = ip_nametoaddr (NIL,&adrlen,&family,&hostname,&next)) &&
-          !silent) mm_log (tmp,WARN);
+          !silent) MM_LOG (tmp,WARN);
           (*bn) (BLOCK_NONE,NIL);
-      } while ((sock < 0) && s);/* repeat until success or no more addreses */
+      } while ((sock < 0) && s && retry_all_addr);/* repeat until success or no more addreses */
     }
   }
   if (sock >= 0)  {		/* won */
@@ -217,9 +218,9 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
     if (stream->ictr = ctr) *(stream->iptr = stream->ibuf) = tmp[0];
 				/* copy official host name */
     stream->host = cpystr (hostname);
-    if (tcpdebug) mm_log ("Stream open and ready for read",TCPDEBUG);
+    if (tcpdebug) MM_LOG ("Stream open and ready for read",TCPDEBUG);
   }
-  else if (!silent) mm_log (tmp,ERROR);
+  else if (!silent) MM_LOG (tmp,ERROR);
   return stream;		/* return success */
 }
 
@@ -237,7 +238,7 @@ TCPSTREAM *tcp_open (char *host,char *service,unsigned long port)
 int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
 		     char *tmp,int *ctr,char *hst)
 {
-	mm_log("tcp_socket_open - begin", NIL);
+	MM_LOG("tcp_socket_open - begin", NIL);
   int i,ti,sock,flgs;
   size_t len;
   time_t now;
@@ -250,9 +251,9 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
 				/* fetid Solaris */
   void *data = (*bn) (BLOCK_SENSITIVE,NIL);
   sprintf (tmp,"Trying IP address [%s]",ip_sockaddrtostring (sadr));
-  mm_log (tmp,NIL);
+  MM_LOG (tmp,NIL);
 				/* make a socket */
-	mm_log("tcp_socket_open - make a socket", NIL);
+	MM_LOG("tcp_socket_open - make a socket", NIL);
   if ((sock = socket (sadr->sa_family,SOCK_STREAM,pt ? pt->p_proto : 0)) < 0) {
     sprintf (tmp,"Unable to create TCP socket: %s",strerror (errno));
     (*bn) (BLOCK_NONSENSITIVE,data);
@@ -288,14 +289,14 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
     }
 
     snprintf (debug_meesage, DEBUG_MESSAGE_LENGTH, "tcp_socket_open - socket id [%d]", sock);
-    mm_log(debug_meesage, NIL);
+    MM_LOG(debug_meesage, NIL);
 
     if ((sock >= 0) && ctr) {	/* want open timeout? */
       now = time (0);		/* open timeout */
       ti = ttmo_open ? now + ttmo_open : 0;
 
       snprintf (debug_meesage, DEBUG_MESSAGE_LENGTH, "ti [%d]", ti);
-      mm_log(debug_meesage, NIL);
+      MM_LOG(debug_meesage, NIL);
 
       tmo.tv_usec = 0;
       FD_ZERO (&rfds);		/* initialize selection vector */
@@ -306,9 +307,9 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
       FD_SET (sock,&efds);
       do {			/* block under timeout */
         tmo.tv_sec = ti ? ti - now : 0;
-        mm_log("tcp_socket_open - Before calling select", NIL);
+        MM_LOG("tcp_socket_open - Before calling select", NIL);
         i = select (sock+1,&rfds,&wfds,&efds,ti ? &tmo : NIL);
-        mm_log("tcp_socket_open - After calling select", NIL);
+        MM_LOG("tcp_socket_open - After calling select", NIL);
         now = time (0);		/* fake timeout if interrupt & time expired */
         if ((i < 0) && (errno == EINTR) && ti && (ti <= now)) i = 0;
       } while ((i < 0) && (errno == EINTR));
@@ -321,7 +322,7 @@ int tcp_socket_open (int family,void *adr,size_t adrlen,unsigned short port,
       }	
       if (i <= 0) {		/* timeout or error? */
         snprintf (debug_meesage, DEBUG_MESSAGE_LENGTH, "timed out or error. i [%d]", i);
-        mm_log(debug_meesage, NIL);
+        MM_LOG(debug_meesage, NIL);
         i = i ? errno : ETIMEDOUT;/* determine error code */
         close (sock);		/* flush socket */
         sock = -1;
@@ -381,7 +382,7 @@ TCPSTREAM *tcp_aopen (NETMBX *mb,char *service,char *usrbuf)
     if (adr = ip_stringtoaddr (host,&len,&i)) fs_give ((void **) &adr);
     else {
       sprintf (tmp,"Bad format domain-literal: %.80s",host);
-      mm_log (tmp,ERROR);
+      MM_LOG (tmp,ERROR);
       return NIL;
     }
   }
@@ -395,7 +396,7 @@ TCPSTREAM *tcp_aopen (NETMBX *mb,char *service,char *usrbuf)
   if (tcpdebug) {
     char msg[MAILTMPLEN];
     sprintf (msg,"Trying %.100s",tmp);
-    mm_log (msg,TCPDEBUG);
+    MM_LOG (msg,TCPDEBUG);
   }
 				/* parse command into argv */
   for (i = 1,path = argv[0] = strtok_r (tmp," ",&r);
@@ -460,7 +461,7 @@ TCPSTREAM *tcp_aopen (NETMBX *mb,char *service,char *usrbuf)
   if (i <= 0) {			/* timeout or error? */
     sprintf (tmp,i ? "error in %s to IMAP server" :
 	     "%s to IMAP server timed out",(*service == '*') ? "ssh" : "rsh");
-    mm_log (tmp,WARN);
+    MM_LOG (tmp,WARN);
     tcp_close (stream);		/* punt stream */
     stream = NIL;
   }
@@ -552,7 +553,10 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
 {
   unsigned long n;
 				/* make sure socket still alive */
-  if (stream->tcpsi < 0) return NIL;
+  if (stream->tcpsi < 0) {
+	  MM_LOG ("tcpsi < 0",TCPDEBUG);
+	  return NIL;
+  }
 				/* can transfer bytes from buffer? */
   if (n = min (size,stream->ictr)) {
     memcpy (s,stream->iptr,n);	/* yes, slurp as much as we can from it */
@@ -572,7 +576,7 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
       time_t tl = time (0);
       time_t now = tl;
       time_t ti = ttmo_read ? now + ttmo_read : 0;
-      if (tcpdebug) mm_log ("Reading TCP buffer",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("Reading TCP buffer",TCPDEBUG);
       tmo.tv_usec = 0;
       FD_ZERO (&fds);		/* initialize selection vector */
       FD_ZERO (&efds);		/* handle errors too */
@@ -591,21 +595,20 @@ long tcp_getbuffer (TCPSTREAM *stream,unsigned long size,char *s)
 	  while (((i = read (stream->tcpsi,s,(int) min (maxposint,size))) < 0)
 		 && (errno == EINTR));
 	if (i <= 0) {		/* error seen? */
-	  if (tcpdebug) {
 	    char tmp[MAILTMPLEN];
 	    if (i) sprintf (s = tmp,"TCP buffer read I/O error %d",errno);
 	    else s = "TCP buffer read end of file";
-	    mm_log (s,TCPDEBUG);
-	  }
+	    MM_LOG (s,TCPDEBUG);
+
 	  return tcp_abort (stream);
 	}
 	s += i;			/* success, point at new place to write */
 	size -= i;		/* reduce byte count */
-	if (tcpdebug) mm_log ("Successfully read TCP buffer",TCPDEBUG);
+	if (tcpdebug) MM_LOG ("Successfully read TCP buffer",TCPDEBUG);
       }
 				/* timeout, punt unless told not to */
       else if (!tmoh || !(*tmoh) (now - t,now - tl)) {
-	if (tcpdebug) mm_log ("TCP buffer read timeout",TCPDEBUG);
+	MM_LOG ("TCP buffer read timeout",TCPDEBUG);
 	return tcp_abort (stream);
       }
     }
@@ -633,7 +636,7 @@ long tcp_getdata (TCPSTREAM *stream)
     time_t tl = time (0);	/* start of request */
     time_t now = tl;
     time_t ti = ttmo_read ? now + ttmo_read : 0;
-    if (tcpdebug) mm_log ("Reading TCP data",TCPDEBUG);
+    if (tcpdebug) MM_LOG ("Reading TCP data",TCPDEBUG);
     tmo.tv_usec = 0;
     FD_ZERO (&fds);		/* initialize selection vector */
     FD_ZERO (&efds);		/* handle errors too */
@@ -655,17 +658,17 @@ long tcp_getdata (TCPSTREAM *stream)
 	  char *s,tmp[MAILTMPLEN];
 	  if (i) sprintf (s = tmp,"TCP data read I/O error %d",errno);
 	  else s = "TCP data read end of file";
-	  mm_log (s,TCPDEBUG);
+	  MM_LOG (s,TCPDEBUG);
 	}
 	return tcp_abort (stream);
       }
       stream->ictr = i;		/* success, set new count and pointer */
       stream->iptr = stream->ibuf;
-      if (tcpdebug) mm_log ("Successfully read TCP data",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("Successfully read TCP data",TCPDEBUG);
     }
 				/* timeout, punt unless told not to */
     else if (!tmoh || !(*tmoh) (now - t,now - tl)) {
-      if (tcpdebug) mm_log ("TCP data read timeout",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("TCP data read timeout",TCPDEBUG);
       return tcp_abort (stream);/* error or timeout no-continue */
     }
   }
@@ -705,7 +708,7 @@ long tcp_sout (TCPSTREAM *stream,char *string,unsigned long size)
     time_t tl = time (0);	/* start of request */
     time_t now = tl;
     time_t ti = ttmo_write ? now + ttmo_write : 0;
-    if (tcpdebug) mm_log ("Writing to TCP",TCPDEBUG);
+    if (tcpdebug) MM_LOG ("Writing to TCP",TCPDEBUG);
     tmo.tv_usec = 0;
     FD_ZERO (&fds);		/* initialize selection vector */
     FD_ZERO (&efds);		/* handle errors too */
@@ -726,17 +729,17 @@ long tcp_sout (TCPSTREAM *stream,char *string,unsigned long size)
 	if (tcpdebug) {
 	  char tmp[MAILTMPLEN];
 	  sprintf (tmp,"TCP write I/O error %d",errno);
-	  mm_log (tmp,TCPDEBUG);
+	  MM_LOG (tmp,TCPDEBUG);
 	}
 	return tcp_abort (stream);
       }
       string += i;		/* how much we sent */
       size -= i;		/* count this size */
-      if (tcpdebug) mm_log ("successfully wrote to TCP",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("successfully wrote to TCP",TCPDEBUG);
     }
 				/* timeout, punt unless told not to */
     else if (!tmoh || !(*tmoh) (now - t,now - tl)) {
-      if (tcpdebug) mm_log ("TCP write timeout",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("TCP write timeout",TCPDEBUG);
       return tcp_abort (stream);
     }
   }
@@ -969,13 +972,13 @@ char *tcp_canonical (char *name)
   data = (*bn) (BLOCK_SENSITIVE,NIL);
   if (tcpdebug) {
     sprintf (host,"DNS canonicalization %.80s",name);
-    mm_log (host,TCPDEBUG);
+    MM_LOG (host,TCPDEBUG);
   }
 				/* get canonical name */
   if (!ip_nametoaddr (name,NIL,NIL,&ret,NIL)) ret = name;
   (*bn) (BLOCK_NONSENSITIVE,data);
   (*bn) (BLOCK_NONE,NIL);	/* alarms OK now */
-  if (tcpdebug) mm_log ("DNS canonicalization done",TCPDEBUG);
+  if (tcpdebug) MM_LOG ("DNS canonicalization done",TCPDEBUG);
   return ret;
 }
 
@@ -994,7 +997,7 @@ char *tcp_name (struct sockaddr *sadr,long flag)
     void *data;
     if (tcpdebug) {
       sprintf (tmp,"Reverse DNS resolution %s",adr);
-      mm_log (tmp,TCPDEBUG);
+      MM_LOG (tmp,TCPDEBUG);
     }
     (*bn) (BLOCK_DNSLOOKUP,NIL);/* quell alarms */
     data = (*bn) (BLOCK_SENSITIVE,NIL);
@@ -1006,7 +1009,7 @@ char *tcp_name (struct sockaddr *sadr,long flag)
     }
     (*bn) (BLOCK_NONSENSITIVE,data);
     (*bn) (BLOCK_NONE,NIL);	/* alarms OK now */
-    if (tcpdebug) mm_log ("Reverse DNS resolution done",TCPDEBUG);
+    if (tcpdebug) MM_LOG ("Reverse DNS resolution done",TCPDEBUG);
   }
   return cpystr (ret);
 }

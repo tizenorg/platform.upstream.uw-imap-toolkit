@@ -115,6 +115,7 @@ void ssl_onceonlyinit (void)
     mail_parameters (NIL,SET_SSLDRIVER,(void *) &ssldriver);
     mail_parameters (NIL,SET_SSLSTART,(void *) ssl_start);
     SSL_library_init ();	/* add all algorithms */
+    SSL_load_error_strings();
   }
 }
 
@@ -173,7 +174,7 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
       if (sf) (*sf) (host,reason,flags);
       else {			/* no error callback, build error message */
 	sprintf (tmp,"Certificate failure for %.80s: %.512s",host,reason);
-	mm_log (tmp,ERROR);
+	MM_LOG (tmp,ERROR);
       }
     case '\0':			/* user answered no to certificate callback */
       if (flags & NET_TRYSSL)	/* return dummy stream to stop tryssl */
@@ -185,8 +186,9 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
 				/* pass to error callback */
       else if (sf) (*sf) (host,reason,flags);
       else {			/* no error callback, build error message */
-	sprintf (tmp,"TLS/SSL failure for %.80s: %.512s",host,reason);
-	mm_log (tmp,ERROR);
+        sprintf (tmp,"TLS/SSL failure for %.80s: %.512s",host,reason);
+        MM_LOG (tmp,ERROR);
+        free (reason); /* OpenSSL error buf */
       }
       break;
     }
@@ -221,8 +223,21 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
   ssl_last_host = host;
   if (!(stream->context = SSL_CTX_new ((flags & NET_TLSCLIENT) ?
 				       TLSv1_client_method () :
-				       SSLv23_client_method ())))
-    return "SSL context failed";
+				       SSLv23_client_method ()))) {
+    /* bio to memory buf */
+    BIO *bio = BIO_new (BIO_s_mem ());
+    ERR_print_errors (bio);
+    char *buf = NULL;
+    size_t len = BIO_get_mem_data (bio, &buf);
+    char *ret = (char *) calloc (1, 1 + len + 40);
+    if (ret) {
+      memcpy (ret, buf , len);
+    }
+    sprintf (ret+len, ": SSL context failed [0x%x] ", flags & NET_TLSCLIENT);
+    BIO_free (bio);
+    return ret;
+//    return "SSL context failed";
+  }
   if (flags & NET_FORCE_LOWER_TLS_VERSION)
   	SSL_CTX_set_options(stream->context, SSL_OP_NO_SSLv2|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
   else
@@ -274,7 +289,7 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
 				host))) {
 				/* application callback */
     if (scq) return (*scq) (err,host,cert ? cert->name : "???") ? NIL : "";
-				/* error message to return via mm_log() */
+				/* error message to return via MM_LOG() */
     sprintf (tmp,"*%.128s: %.255s",err,cert ? cert->name : "???");
     return ssl_last_error = cpystr (tmp);
   }
@@ -297,7 +312,7 @@ static int ssl_open_verify (int ok,X509_STORE_CTX *ctx)
       (X509_STORE_CTX_get_error (ctx));
     X509_NAME_oneline (X509_get_subject_name
 		       (X509_STORE_CTX_get_current_cert (ctx)),cert,255);
-    if (!scq) {			/* mm_log() error message if no callback */
+    if (!scq) {			/* MM_LOG() error message if no callback */
       sprintf (tmp,"*%.128s: %.255s",err,cert);
       ssl_last_error = cpystr (tmp);
     }
@@ -492,7 +507,7 @@ long ssl_getdata (SSLSTREAM *stream)
     int ti = ttmo_read ? now + ttmo_read : 0;
     if (SSL_pending (stream->con)) i = 1;
     else {
-      if (tcpdebug) mm_log ("Reading SSL data",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("Reading SSL data",TCPDEBUG);
       tmo.tv_usec = 0;
       FD_ZERO (&fds);		/* initialize selection vector */
       FD_ZERO (&efds);		/* handle errors too */
@@ -518,17 +533,17 @@ long ssl_getdata (SSLSTREAM *stream)
 	  if (i) sprintf (s = tmp,"SSL data read I/O error %d SSL error %d",
 			  errno,SSL_get_error (stream->con,i));
 	  else s = "SSL data read end of file";
-	  mm_log (s,TCPDEBUG);
+	  MM_LOG (s,TCPDEBUG);
 	}
 	return ssl_abort (stream);
       }
       stream->iptr = stream->ibuf;/* point at TCP buffer */
       stream->ictr = i;		/* set new byte count */
-      if (tcpdebug) mm_log ("Successfully read SSL data",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("Successfully read SSL data",TCPDEBUG);
     }
 				/* timeout, punt unless told not to */
     else if (!tmoh || !(*tmoh) (now - t,now - tl)) {
-      if (tcpdebug) mm_log ("SSL data read timeout",TCPDEBUG);
+      if (tcpdebug) MM_LOG ("SSL data read timeout",TCPDEBUG);
       return ssl_abort (stream);
     }
   }
@@ -561,7 +576,7 @@ long ssl_sout (SSLSTREAM *stream,char *string,unsigned long size)
   blocknotify_t bn = (blocknotify_t) mail_parameters (NIL,GET_BLOCKNOTIFY,NIL);
   if (!stream->con) return NIL;
   (*bn) (BLOCK_TCPWRITE,NIL);
-  if (tcpdebug) mm_log ("Writing to SSL",TCPDEBUG);
+  if (tcpdebug) MM_LOG ("Writing to SSL",TCPDEBUG);
 				/* until request satisfied */
   for (i = 0; size > 0; string += i,size -= i)
 				/* write as much as we can */
@@ -570,11 +585,11 @@ long ssl_sout (SSLSTREAM *stream,char *string,unsigned long size)
 	char tmp[MAILTMPLEN];
 	sprintf (tmp,"SSL data write I/O error %d SSL error %d",
 		 errno,SSL_get_error (stream->con,i));
-	mm_log (tmp,TCPDEBUG);
+	MM_LOG (tmp,TCPDEBUG);
       }
       return ssl_abort (stream);/* write failed */
     }
-  if (tcpdebug) mm_log ("successfully wrote to TCP",TCPDEBUG);
+  if (tcpdebug) MM_LOG ("successfully wrote to TCP",TCPDEBUG);
   (*bn) (BLOCK_NONE,NIL);
   return LONGT;			/* all done */
 }

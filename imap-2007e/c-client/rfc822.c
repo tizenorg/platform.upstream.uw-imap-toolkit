@@ -198,7 +198,7 @@ void rfc822_parse_msg_full (ENVELOPE **en,BODY **bdy,char *s,unsigned long i,
 	if (!env->date && !strcmp (tmp+1,"ATE")) env->date = cpystr (d);
 	break;
       case 'F':			/* possible From: */
-	if (!strcmp (tmp+1,"ROM")) rfc822_parse_adrlist (&env->from,d,host);
+	if (!strcmp (tmp+1,"ROM")) 	rfc822_parse_adrlist (&env->from,d,host);
 	else if (!strcmp (tmp+1,"OLLOWUP-TO")) {
 	  t = env->followup_to = (char *) fs_get (1 + strlen (d));
 	  while (c = *d++) if (c != ' ') *t++ = c;
@@ -907,7 +907,7 @@ ADDRESS *rfc822_parse_mailbox (char **string,char *defaulthost)
 				/* phrase is a personal name */
       if (adr->personal) fs_give ((void **) &adr->personal);
       *end = '\0';		/* tie off phrase */
-      adr->personal = rfc822_cpy (s);
+      adr->personal = rfc822_cpy_for_personal (s);
     }
 				/* call external phraseparser if phrase only */
     else if (pp && rfc822_phraseonly (end) &&
@@ -1071,7 +1071,7 @@ ADDRESS *rfc822_parse_addrspec (char *string,char **ret,char *defaulthost)
   if (end && !(adr->personal && *adr->personal)) {
     while (*end == ' ') ++end;	/* see if we can find a person name here */
     if ((*end == '(') && (s = rfc822_skip_comment (&end,LONGT)) && strlen (s))
-      adr->personal = rfc822_cpy (s);
+      adr->personal = rfc822_cpy_for_personal (s);
     rfc822_skipws (&end);	/* skip any other WS in the normal way */
   }
 				/* set return to end pointer */
@@ -1174,56 +1174,56 @@ char *rfc822_parse_word (char *s,const char *delimiters)
       str = ++st;		/* always skip past ESC */
       switch (*st) {		/* special hack for RFC 1468 (ISO-2022-JP) */
       case I2C_MULTI:		/* multi byte sequence */
-	switch (*++st) {
-	case I2CS_94x94_JIS_OLD:/* old JIS (1978) */
-	case I2CS_94x94_JIS_NEW:/* new JIS (1983) */
-	  str = ++st;		/* skip past the shift to JIS */
-	  while (st = strchr (st,I2C_ESC))
-	    if ((*++st == I2C_G0_94) && ((st[1] == I2CS_94_ASCII) ||
-					 (st[1] == I2CS_94_JIS_ROMAN) ||
-					 (st[1] == I2CS_94_JIS_BUGROM))) {
-	      str = st += 2;	/* skip past the shift back to ASCII */
-	      break;
-	    }
+        switch (*++st) {
+          case I2CS_94x94_JIS_OLD:/* old JIS (1978) */
+          case I2CS_94x94_JIS_NEW:/* new JIS (1983) */
+            str = ++st;		/* skip past the shift to JIS */
+            while (st = strchr (st,I2C_ESC))
+              if ((*++st == I2C_G0_94) && ((st[1] == I2CS_94_ASCII) ||
+                (st[1] == I2CS_94_JIS_ROMAN) ||
+                (st[1] == I2CS_94_JIS_BUGROM))) {
+                str = st += 2;	/* skip past the shift back to ASCII */
+                break;
+              }
 				/* eats entire text if no shift back */
-	  if (!st || !*st) return str + strlen (str);
-	}
-	break;
-      case I2C_G0_94:		/* single byte sequence */
-	switch (st[1]) {
-	case I2CS_94_ASCII:	/* shift to ASCII */
-	case I2CS_94_JIS_ROMAN:	/* shift to JIS-Roman */
-	case I2CS_94_JIS_BUGROM:/* old buggy definition of JIS-Roman */
-	  str = st + 2;		/* skip past the shift */
-	  break;
-	}
+            if (!st || !*st) return str + strlen (str);
+          }
+	    break;
+          case I2C_G0_94:		/* single byte sequence */
+            switch (st[1]) {
+              case I2CS_94_ASCII:	/* shift to ASCII */
+              case I2CS_94_JIS_ROMAN:	/* shift to JIS-Roman */
+              case I2CS_94_JIS_BUGROM:/* old buggy definition of JIS-Roman */
+                str = st + 2;		/* skip past the shift */
+                break;
+            }
       }
     }
 
     else switch (*st) {		/* dispatch based on delimiter */
-    case '"':			/* quoted string */
+      case '"':			/* quoted string */
 				/* look for close quote */
-      while (*++st != '"') switch (*st) {
-      case '\0':		/* unbalanced quoted string */
-	return NIL;		/* sick sick sick */
-      case '\\':		/* quoted character */
-	if (!*++st) return NIL;	/* skip the next character */
-      default:			/* ordinary character */
-	break;			/* no special action */
-      }
-      str = ++st;		/* continue parse */
-      break;
-    case '\\':			/* quoted character */
+        while (*++st != '"') switch (*st) {
+            case '\0':		/* unbalanced quoted string */
+              return NIL;		/* sick sick sick */
+            case '\\':		/* quoted character */
+              if (!*++st) return NIL;	/* skip the next character */
+            default:			/* ordinary character */
+              break;			/* no special action */
+        }
+        str = ++st;		/* continue parse */
+        break;
+      case '\\':			/* quoted character */
       /* This is wrong; a quoted-pair can not be part of a word.  However,
        * domain-literal is parsed as a word and quoted-pairs can be used
        * *there*.  Either way, it's pretty pathological.
        */
-      if (st[1]) {		/* not on NUL though... */
-	str = st + 2;		/* skip quoted character and go on */
-	break;
-      }
-    default:			/* found a word delimiter */
-      return (st == s) ? NIL : st;
+        if (st[1]) {		/* not on NUL though... */
+          str = st + 2;		/* skip quoted character and go on */
+          break;
+        }
+      default:			/* found a word delimiter */
+        return (st == s) ? NIL : st;
     }
   }
 }
@@ -1237,6 +1237,14 @@ char *rfc822_cpy (char *src)
 {
 				/* copy and unquote */
   return rfc822_quote (cpystr (src));
+}
+
+char *rfc822_cpy_for_personal (char *src)
+{
+				/* copy and unquote */
+	return rfc822_quote (cpystr (src));
+  /* Calling rfc822_quote should be replaced with below line. */
+  /* return rfc822quote_for_personal (cpystr (src)); */
 }
 
 
@@ -1260,6 +1268,27 @@ char *rfc822_quote (char *src)
     *dst = '\0';		/* tie off string */
   }
   return ret;			/* return our string */
+}
+
+char *rfc822_quote_for_personal (char *src)
+{
+	char *ret = src;
+	if (strpbrk (src,"\\\"")) {	/* any quoting in string? */
+		char *dst = ret;
+		while (*src) {		/* copy string */
+			if (*src == '\\') {
+				if (*(src + 1) == '\"')
+					*dst++ = *src++;	/* copy character */
+				else
+					src++;/* skip over single quote, copy next always */
+			}
+			else if (*src == '\"')
+				src++;	/* skip double quote entirely */
+			*dst++ = *src++;	/* copy character */
+		}
+		*dst = '\0';		/* tie off string */
+	}
+	return ret;			/* return our string */
 }
 
 
@@ -1557,7 +1586,7 @@ long rfc822_output_address_list (RFC822BUFFER *buf,ADDRESS *adr,long pretty,
 						    rspecials) : LONGT) &&
 		rfc822_output_string (buf," <") &&
 		rfc822_output_address (buf,adr) &&
-		rfc822_output_string (buf,">"))) return NIL;
+		rfc822_output_string (buf,">")))  return NIL;
 	}
 	else if (!rfc822_output_address (buf,adr)) return NIL;
 	if (adr->next && adr->next->mailbox &&
@@ -1729,6 +1758,7 @@ void rfc822_encode_body_7bit (ENVELOPE *env,BODY *body)
   PARAMETER **param;
   if (body) switch (body->type) {
   case TYPEMULTIPART:		/* multi-part */
+    MM_LOG ("rfc822_encode_body_7bit-MULTIPART",PARSE);
     for (param = &body->parameter;
 	 *param && strcmp ((*param)->attribute,"BOUNDARY");
 	 param = &(*param)->next);
@@ -1746,6 +1776,7 @@ void rfc822_encode_body_7bit (ENVELOPE *env,BODY *body)
     while (part = part->next);	/* until done */
     break;
   case TYPEMESSAGE:		/* encapsulated message */
+	MM_LOG ("rfc822_encode_body_7bit-MESSAGE",PARSE);
     switch (body->encoding) {
     case ENC7BIT:
       break;
@@ -1763,19 +1794,25 @@ void rfc822_encode_body_7bit (ENVELOPE *env,BODY *body)
     switch (body->encoding) {
     case ENC8BIT:		/* encode 8BIT into QUOTED-PRINTABLE */
 				/* remember old 8-bit contents */
+      MM_LOG ("rfc822_encode_body_7bit-encode-ENC8BIT",PARSE);
       f = (void *) body->contents.text.data;
+      MM_LOG ("rfc822_8bit-begin",PARSE);
       body->contents.text.data =
 	rfc822_8bit (body->contents.text.data,
 		     body->contents.text.size,&body->contents.text.size);
+      MM_LOG ("rfc822_8bit-end",PARSE);
       body->encoding = ENCQUOTEDPRINTABLE;
       fs_give (&f);		/* flush old binary contents */
       break;
     case ENCBINARY:		/* encode binary into BASE64 */
 				/* remember old binary contents */
+      MM_LOG ("rfc822_encode_body_7bit-encode-ENCBINARY",PARSE);
       f = (void *) body->contents.text.data;
+      MM_LOG ("rfc822_binary-begin",PARSE);
       body->contents.text.data =
 	rfc822_binary ((void *) body->contents.text.data,
 		       body->contents.text.size,&body->contents.text.size);
+      MM_LOG ("rfc822_binary-end",PARSE);
       body->encoding = ENCBASE64;
       fs_give (&f);		/* flush old binary contents */
     default:			/* otherwise OK */

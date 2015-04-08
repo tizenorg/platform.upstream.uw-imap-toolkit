@@ -68,57 +68,59 @@ long auth_plain_client (authchallenge_t challenger,authrespond_t responder,
     pwd[0] = NIL;		/* prompt user if empty challenge */
     mm_login (mb,user,pwd,*trial);
 
-    if (!pwd[0]) {		/* empty challenge or user requested abort */
-      (*responder) (stream,NIL,0);
-      *trial = 0;		/* cancel subsequent attempts */
-      ret = LONGT;		/* will get a BAD response back */
-    }
-
-    else if ((*responder) (stream,user,strlen (user)) &&
-	     (challenge = (*challenger) (stream,&clen))) {
-      fs_give ((void **) &challenge);
-				/* send password */
-      if ((*responder) (stream,pwd,strlen (pwd))) {
-	if (challenge = (*challenger) (stream,&clen))
-	  fs_give ((void **) &challenge);
-	else {
-	  ++*trial;		/* can try again if necessary */
-	  ret = LONGT;		/* check the authentication */
-	}
+    if (clen) {
+      mm_log ("Enter section for handling non-emtpy challenge",WARN);
+      if ((*responder) (stream,user,strlen (user)) &&
+           (challenge = (*challenger) (stream,&clen))) {
+        fs_give ((void **) &challenge);
+           /* send password */
+        if ((*responder) (stream,pwd,strlen (pwd))) {
+          if (challenge = (*challenger) (stream,&clen))
+            fs_give ((void **) &challenge);
+          else {
+            ++*trial;		/* can try again if necessary */
+            ret = LONGT;		/* check the authentication */
+          }
+        }
       }
     }
-
     else {
-      unsigned long rlen = 
-	strlen (mb->authuser) + strlen (user) + strlen (pwd) + 2;
-      char *response = (char *) fs_get (rlen);
-      char *t = response;	/* copy authorization id */
+      if (!pwd[0]) {		/* empty challenge or user requested abort */
+        (*responder) (stream,NIL,0);
+        *trial = 0;		/* cancel subsequent attempts */
+        ret = LONGT;		/* will get a BAD response back */
+      }
+      else {
+        unsigned long rlen =
+        strlen (mb->authuser) + strlen (user) + strlen (pwd) + 2;
+        char *response = (char *) fs_get (rlen);
+        char *t = response;	/* copy authorization id */
 
-	memset(response, 0x00, rlen);
+        memset(response, 0x00, rlen);
 
-      if (mb->authuser[0]) for (u = user; *u; *t++ = *u++);
-      *t++ = '\0';		/* delimiting NUL */
+        if (mb->authuser[0]) for (u = user; *u; *t++ = *u++);
+        *t++ = '\0';		/* delimiting NUL */
 
 				/* copy authentication id */
-      for (u = mb->authuser[0] ? mb->authuser : user; *u; *t++ = *u++);
-      *t++ = '\0';		/* delimiting NUL */
+        for (u = mb->authuser[0] ? mb->authuser : user; *u; *t++ = *u++);
+        *t++ = '\0';		/* delimiting NUL */
 
 				/* copy password */
-      for (u = pwd; *u; *t++ = *u++);
+        for (u = pwd; *u; *t++ = *u++);
 				/* send credentials */
 	
-      if ((*responder) (stream,response,rlen)) {
-	if (challenge = (*challenger) (stream,&clen))
-	{
-	  fs_give ((void **) &challenge);
-	}
-	else {
-	  ++*trial;		/* can try again if necessary */
-	  ret = LONGT;		/* check the authentication */
-	}
+        if ((*responder) (stream,response,rlen)) {
+          if (challenge = (*challenger) (stream,&clen)) {
+            fs_give ((void **) &challenge);
+          }
+          else {
+            ++*trial;		/* can try again if necessary */
+            ret = LONGT;		/* check the authentication */
+          }
+        }
+        memset (response,0,rlen);	/* erase credentials */
+        fs_give ((void **) &response);
       }
-      memset (response,0,rlen);	/* erase credentials */
-      fs_give ((void **) &response);
     }
   }
   else

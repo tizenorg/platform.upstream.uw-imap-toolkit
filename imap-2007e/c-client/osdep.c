@@ -257,6 +257,7 @@ void ssl_onceonlyinit (void)
     mail_parameters (NIL,SET_SSLDRIVER,(void *) &ssldriver);
     mail_parameters (NIL,SET_SSLSTART,(void *) ssl_start);
     SSL_library_init ();	/* add all algorithms */
+    SSL_load_error_strings();
   }
 }
 
@@ -327,11 +328,12 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
 				/* pass to error callback */
       else if (sf) (*sf) (host,reason,flags);
       else {			/* no error callback, build error message */
-	sprintf (tmp,"TLS/SSL failure for %.80s: %.512s",host,reason);
-	mm_log (tmp,ERROR);
+        sprintf (tmp,"TLS/SSL failure for %.80s: %.512s",host,reason);
+        mm_log (tmp,ERROR);
       }
       break;
     }
+    free (reason); /* OpenSSL error buf */
   }
   return stream;
 }
@@ -347,7 +349,7 @@ static SSLSTREAM *ssl_start (TCPSTREAM *tstream,char *host,unsigned long flags)
 static char *ssl_last_error = NIL;
 static char *ssl_last_host = NIL;
 
-/* #define __NON_BLOCKING_SSL_WRITE__ */
+#define __NON_BLOCKING_SSL_WRITE__ 
 
 #ifdef __NON_BLOCKING_SSL_WRITE__
 /*  g.shyamakshi@samsung.com 
@@ -399,8 +401,21 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
   ssl_last_host = host;
   if (!(stream->context = SSL_CTX_new ((flags & NET_TLSCLIENT) ?
 				       TLSv1_client_method () :
-				       SSLv23_client_method ())))
-    return "SSL context failed";
+				       SSLv23_client_method ()))) {
+    /* bio to memory buf */
+    BIO *bio = BIO_new (BIO_s_mem ());
+    ERR_print_errors (bio);
+    char *buf = NULL;
+    size_t len = BIO_get_mem_data (bio, &buf);
+    char *ret = (char *) calloc (1, 1 + len + 40);
+    if (ret) {
+      memcpy (ret, buf , len);
+    }
+    sprintf (ret+len, ": SSL context failed [0x%x] ", flags & NET_TLSCLIENT);
+    BIO_free (bio);
+    return ret;
+//    return "SSL context failed";
+  }
   if (flags & NET_FORCE_LOWER_TLS_VERSION)
   	SSL_CTX_set_options(stream->context, SSL_OP_NO_SSLv2|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2);
   else
@@ -422,7 +437,7 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
       X509_free (cert);
     }
     BIO_free (bio);
-    if (!cert) return "SSL client certificate failed";
+    if (!cert) return strdup("SSL client certificate failed");
 				/* want to supply private key? */
     if ((t = (sck ? (*sck) () : s)) && (tl = strlen (t))) {
       EVP_PKEY *key;
@@ -439,23 +454,33 @@ static char *ssl_start_work (SSLSTREAM *stream,char *host,unsigned long flags)
 
 				/* create connection */
   if (!(stream->con = (SSL *) SSL_new (stream->context)))
-    return "SSL connection failed";
+    return strdup("SSL connection failed");
   bio = BIO_new_socket (stream->tcpstream->tcpsi,BIO_NOCLOSE);
   SSL_set_bio (stream->con,bio,bio);
   SSL_set_connect_state (stream->con);
   if (SSL_in_init (stream->con)) SSL_total_renegotiations (stream->con);
 				/* now negotiate SSL */
   if (SSL_write (stream->con,"",0) < 0)
-    return ssl_last_error ? ssl_last_error : "SSL negotiation failed";
+    return strdup(ssl_last_error ? ssl_last_error : "SSL negotiation failed");
 				/* need to validate host names? */
-  if (!(flags & NET_NOVALIDATECERT) &&
-      (err = ssl_validate_cert (cert = SSL_get_peer_certificate (stream->con),
-				host))) {
-				/* application callback */
-    if (scq) return (*scq) (err,host,cert ? cert->name : "???") ? NIL : "";
-				/* error message to return via mm_log() */
-    sprintf (tmp,"*%.128s: %.255s",err,cert ? cert->name : "???");
-    return ssl_last_error = cpystr (tmp);
+  if (!(flags & NET_NOVALIDATECERT)) {
+    cert = SSL_get_peer_certificate (stream->con);
+    if (err = ssl_validate_cert (cert, host)) {
+  				/* application callback */
+      if (scq) {
+        long err = (*scq) (err,host,cert ? cert->name : "???");
+        if (cert)
+          X509_free (cert);
+        return (err? NIL : strdup(""));
+      }  	
+			/* error message to return via mm_log() */
+      sprintf (tmp,"*%.128s: %.255s",err,cert ? cert->name : "???");
+      if (cert)
+        X509_free (cert);
+      return strdup(ssl_last_error = cpystr (tmp));
+    }
+    if (cert)
+      X509_free (cert);
   }
   return NIL;
 }
@@ -937,7 +962,10 @@ static long ssl_abort (SSLSTREAM *stream)
 
 char *ssl_host (SSLSTREAM *stream)
 {
-  return tcp_host (stream->tcpstream);
+	if(stream == NULL || stream->tcpstream == NULL)
+		return "";
+
+	return tcp_host (stream->tcpstream);
 }
 
 

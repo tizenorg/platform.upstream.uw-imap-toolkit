@@ -58,7 +58,7 @@ long auth_xoauth2_client (authchallenge_t challenger,authrespond_t responder,
 	if (challenge = (*challenger) (stream,&clen)) {
 		fs_give ((void **) &challenge);
 		if (clen) { /* abort if challenge non-empty */
-			mm_log ("auth_xoauth2_client : non-empty initial XOAUTH2 challenge",WARN);
+			MM_LOG ("auth_xoauth2_client : non-empty initial XOAUTH2 challenge",WARN);
 			(*responder) (stream,NIL,0);
 			ret = LONGT; /* will get a BAD response back */
 		}
@@ -76,12 +76,12 @@ long auth_xoauth2_client (authchallenge_t challenger,authrespond_t responder,
 
 			snprintf(formed_response, MAX_RESPONSE_LENGTH, "user=%s%cauth=Bearer %s%c%c", user, CHAR_SOH, token, CHAR_SOH, CHAR_SOH);
 
-			mm_log(formed_response, TCPDEBUG);
+			MM_LOG(formed_response, TCPDEBUG);
 
 			if ((*responder) (stream,formed_response,strlen(formed_response))) {
 				if (challenge = (*challenger) (stream,&clen)) {
 					/* print challenge with error code */
-					mm_log(challenge, ERROR);
+					MM_LOG(challenge, ERROR);
 					/* and send CR */
 					(*responder) (stream, "", 0);
 					fs_give ((void **) &challenge);

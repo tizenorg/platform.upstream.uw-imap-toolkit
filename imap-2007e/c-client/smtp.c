@@ -150,14 +150,14 @@ SENDSTREAM *smtp_open_full (NETDRIVER *dv,char **hostlist,char *service,
   char *s,tmp[MAILTMPLEN];
   NETSTREAM *netstream;
   NETMBX mb;
-  if (!(hostlist && *hostlist)) mm_log ("Missing SMTP service host",ERROR);
+  if (!(hostlist && *hostlist)) MM_LOG ("Missing SMTP service host",ERROR);
 				/* maximum domain name is 64 characters */
   else do if (strlen (*hostlist) < SMTPMAXDOMAIN) {
     sprintf (tmp,"{%.1000s}",*hostlist);
     if (!mail_valid_net_parse_work (tmp,&mb,service ? service : "smtp") ||
 	mb.anoflag || mb.readonlyflag) {
       sprintf (tmp,"Invalid host specifier: %.80s",*hostlist);
-      mm_log (tmp,ERROR);
+      MM_LOG (tmp,ERROR);
     }
     else {			/* light tryssl flag if requested */
       mb.trysslflag = (options & SOP_TRYSSL) ? T : NIL;
@@ -190,14 +190,14 @@ SENDSTREAM *smtp_open_full (NETDRIVER *dv,char **hostlist,char *service,
 	while ((reply < 100) || (stream->reply[3] == '-'));
 	if (reply != SMTPGREET){/* get SMTP greeting */
 	  sprintf (tmp,"SMTP greeting failure: %.80s",stream->reply);
-	  mm_log (tmp,ERROR);
+	  MM_LOG (tmp,ERROR);
 	  stream = smtp_close (stream);
 	}
 				/* try EHLO first, then HELO */
 	else if (((reply = smtp_ehlo (stream,s,&mb)) != SMTPOK) &&
 		 ((reply = smtp_send (stream,"HELO",s)) != SMTPOK)) {
 	  sprintf (tmp,"SMTP hello failure: %.80s",stream->reply);
-	  mm_log (tmp,ERROR);
+	  MM_LOG (tmp,ERROR);
 	  stream = smtp_close (stream);
 	}
 	else {
@@ -217,7 +217,7 @@ SENDSTREAM *smtp_open_full (NETDRIVER *dv,char **hostlist,char *service,
 				/* TLS negotiation failed after STARTTLS */
 	      sprintf (tmp,"Unable to negotiate TLS with this server: %.80s",
 		       mb.host);
-	      mm_log (tmp,ERROR);
+	      MM_LOG (tmp,ERROR);
 				/* close without doing QUIT */
 	      if (stream->netstream) net_close (stream->netstream);
 	      stream->netstream = NIL;
@@ -227,14 +227,14 @@ SENDSTREAM *smtp_open_full (NETDRIVER *dv,char **hostlist,char *service,
 	    else if ((reply = smtp_ehlo (stream,s,&mb)) != SMTPOK) {
 	      sprintf (tmp,"SMTP EHLO failure after STARTTLS: %.80s",
 		       stream->reply);
-	      mm_log (tmp,ERROR);
+	      MM_LOG (tmp,ERROR);
 	      stream = smtp_close (stream);
 	    }
 	    else ESMTP.ok = T;	/* TLS OK and EHLO successful */
 	  }
 	  else if (mb.tlsflag) {/* user specified /tls but can't do it */
 	    sprintf (tmp,"TLS unavailable with this server: %.80s",mb.host);
-	    mm_log (tmp,ERROR);
+	    MM_LOG (tmp,ERROR);
 	    stream = smtp_close (stream);
 	  }
 
@@ -255,7 +255,7 @@ SENDSTREAM *smtp_open_full (NETDRIVER *dv,char **hostlist,char *service,
 	    }
 	    else {		/* no available authenticators? */
 	      sprintf (tmp,"%sSMTP authentication not available: %.80s", mb.secflag ? "Secure " : "",mb.host);
-	      mm_log (tmp,ERROR);
+	      MM_LOG (tmp,ERROR);
 	      stream = smtp_close (stream);
 	    }
 	  }
@@ -297,11 +297,17 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
        !ret && stream->netstream && auths &&
        (at = mail_lookup_auth (find_rightmost_bit (&auths) + 1)); ) {
 
+    if (mb->auth_method != AUTH_METHOD_XOAUTH2 && strstr(at->name, auth_xoauth2.name) ) {
+    	sprintf (tmp,"auth_method is not AUTH_METHOD_XOAUTH2. So skipped XOAUTH authenticator.");
+    	MM_LOG (tmp,NIL);
+    	continue;
+    }
+
     sprintf (tmp,"Trying using %s authentication. ", at->name);
-    mm_log (tmp,NIL);
+    MM_LOG (tmp,NIL);
     if (lsterr) {		/* previous authenticator failed? */
       sprintf (tmp,"Retrying using %s authentication after %.80s", at->name,lsterr);
-      mm_log (tmp,NIL);
+      MM_LOG (tmp,NIL);
       fs_give ((void **) &lsterr);
     }
     trial = 0;			/* initial trial count */
@@ -309,7 +315,7 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
     if (stream->netstream) do {
       if (lsterr) {
 	sprintf (tmp,"Retrying %s authentication after %.80s",at->name,lsterr);
-	mm_log (tmp,WARN);
+	MM_LOG (tmp,WARN);
 	fs_give ((void **) &lsterr);
       }
       stream->saslcancel = NIL;
@@ -323,7 +329,7 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
 	    ret = LONGT;
 	  }
 				/* if main program requested cancellation */
-	  else if (!trial) mm_log ("SMTP Authentication cancelled",ERROR);
+	  else if (!trial) MM_LOG ("SMTP Authentication cancelled",ERROR);
 	}
 	stream->sensitive = NIL;/* unhide */
       }
@@ -335,7 +341,7 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
   if (lsterr) {			/* previous authenticator failed? */
     if (!stream->saslcancel) {	/* don't do this if a cancel */
       sprintf (tmp,"Can not authenticate to SMTP server: %.80s",lsterr);
-      mm_log (tmp,ERROR);
+      MM_LOG (tmp,ERROR);
     }
     fs_give ((void **) &lsterr);
   }
@@ -356,7 +362,7 @@ void *smtp_challenge (void *s,unsigned long *len)
   // for smtp.mail.yahoo.co.kr
 	if (!strcmp(stream->reply+4, "ok, go on")) {
 		sprintf (tmp,"smtp_challenge : Server bug: non-empty initial PLAIN challenge 3: %.80s",stream->reply+4);
-		mm_log (tmp,WARN);
+		MM_LOG (tmp,WARN);
 		
 		*len = 0;		// MUST BE
 		return cpystr("ok, go on");
@@ -372,7 +378,7 @@ void *smtp_challenge (void *s,unsigned long *len)
       !(ret = rfc822_base64 ((unsigned char *) stream->reply + 4,
 			     strlen (stream->reply + 4),len))) {
     sprintf (tmp,"SMTP SERVER BUG (invalid challenge): %.80s",stream->reply+4);
-    mm_log (tmp,ERROR);
+    MM_LOG (tmp,ERROR);
   }
   return ret;
 }
