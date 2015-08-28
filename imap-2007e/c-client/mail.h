@@ -1621,7 +1621,9 @@ DRIVER {
 #define MM_FLAGS mm_flags
 #define MM_NOTIFY mm_notify
 #define MM_STATUS mm_status
-/* #define MM_LOG mm_log */
+#define MM_LOG mm_log 
+
+/*
 #define MM_LOG(str, errflg)  \
 	do {\
 		char *path_log = g_strdup_printf("%s (%d)> %s", __FUNCTION__, __LINE__, str);\
@@ -1629,7 +1631,7 @@ DRIVER {
 		g_free(path_log);\
 		path_log = NULL;\
 	} while(0)
-
+*/
 #define MM_CRITICAL mm_critical
 #define MM_NOCRITICAL mm_nocritical
 #define MM_DISKERROR mm_diskerror
