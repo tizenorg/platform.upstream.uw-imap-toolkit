@@ -297,6 +297,12 @@ long smtp_auth (SENDSTREAM *stream,NETMBX *mb,char *tmp)
        !ret && stream->netstream && auths &&
        (at = mail_lookup_auth (find_rightmost_bit (&auths) + 1)); ) {
 
+	if (!strcasecmp(at->name, "cram-md5")) {
+		sprintf(tmp, "auth_method is cram-md5. skipped cram-md5 authenticator.");
+		MM_LOG(tmp, NIL);
+		continue;
+	}
+
     if (mb->auth_method != AUTH_METHOD_XOAUTH2 && strstr(at->name, auth_xoauth2.name) ) {
     	sprintf (tmp,"auth_method is not AUTH_METHOD_XOAUTH2. So skipped XOAUTH authenticator.");
     	MM_LOG (tmp,NIL);

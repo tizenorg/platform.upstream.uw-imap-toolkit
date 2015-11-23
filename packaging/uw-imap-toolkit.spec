@@ -5,7 +5,7 @@
 
 Name:       uw-imap-toolkit
 Summary:    IMAP-2007e developed by University of Washington
-Version:    0.1.3
+Version:    0.1.36
 Release:    0
 Group:      Messaging/Libraries
 License:    Apache-2.0

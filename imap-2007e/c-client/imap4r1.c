@@ -8,7 +8,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * 
+ *
  * ========================================================================
  */
 
@@ -67,7 +67,7 @@ typedef struct imap_parsed_reply {
 
 
 /* IMAP4 I/O stream local data */
-	
+
 typedef struct imap_local {
   NETSTREAM *netstream;		/* TCP I/O stream */
   IMAPPARSEDREPLY reply;	/* last parsed reply */
@@ -872,7 +872,7 @@ MAILSTREAM *imap_open (MAILSTREAM *stream)
       reply = (LOCAL->netstream = net_open (&mb,NIL,defprt,ssld,"*imaps",
 					    sslport)) ?
 	imap_reply (stream,NIL) : NIL;
-    /* 
+    /*
      * No overriding conditions, so get the best connection that we can.  In
      * order, attempt to open via simap, tryssl, rimap, and finally TCP.
      */
@@ -1501,11 +1501,11 @@ long imap_overview (MAILSTREAM *stream,overview_t ofn)
   ov.optional.lines = 0;	/* now overview each message */
   ov.optional.xref = NIL;
   if (ofn) for (i = 1; i <= stream->nmsgs; i++)
-#ifdef __FEATURE_HEADER_OPTIMIZATION__	
-/* New last parameter 0 or 1 added to identify if the call is to fetch header or fetch body 
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
+/* New last parameter 0 or 1 added to identify if the call is to fetch header or fetch body
  * 0 mean fetch mail header; 1 means fetch mail full body or attachment */
  if (((elt = mail_elt (stream,i))->sequence) &&
-	(env = mail_fetch_structure (stream,i,NIL,NIL,0)) && ofn) 
+	(env = mail_fetch_structure (stream,i,NIL,NIL,0)) && ofn)
 #else
     if (((elt = mail_elt (stream,i))->sequence) &&
 	(env = mail_fetch_structure (stream,i,NIL,NIL)) && ofn)
@@ -1622,7 +1622,7 @@ ENVELOPE *imap_structure (MAILSTREAM *stream,unsigned long msgno,BODY **body,
 		if (k = (k > i) ? k - i : 0)
 				/* yes, scan further in this range */
 		  for (i = x + 2; (i <= j) &&
-			 ((i == msgno) || 
+			 ((i == msgno) ||
 			  ((msg = &(mail_elt (stream,i)->private.msg))->env &&
 			   (!body || msg->body)));
 		       i++);
@@ -2119,7 +2119,12 @@ long imap_search (MAILSTREAM *stream,char *charset,SEARCHPGM *pgm,long flags)
 	     pgm->keyword || pgm->unkeyword ||
 	     pgm->return_path || pgm->sender ||
 	     pgm->reply_to || pgm->in_reply_to || pgm->message_id ||
-	     pgm->newsgroups || pgm->followup_to || pgm->references)) {
+	     pgm->newsgroups || pgm->followup_to || pgm->references
+#ifdef __FEATURE_GMIME_SEARCH_EXTENTION__
+         /* added by sh0701.kwon@samsung.com */
+		 || pgm->attachment_name
+#endif /* __FEATURE_GMIME_SEARCH_EXTENTION__ */
+		 )) {
     if (!mail_search_default (stream,NIL,pgm,flags | SE_NOSERVER))
       MM_FATAL("impossible mail_search_default() failure");
       return NIL;
@@ -2153,7 +2158,7 @@ long imap_search (MAILSTREAM *stream,char *charset,SEARCHPGM *pgm,long flags)
 	  i = set->last; j = set->first;
 	}
 	while (i <= j) mail_elt (stream,i++)->private.filter = T;
-      }      
+      }
       pgm->msgno = NIL;		/* and without the searchset */
       reply = imap_send (stream,cmd,args);
       pgm->msgno = ss;		/* restore searchset */
@@ -2178,7 +2183,7 @@ long imap_search (MAILSTREAM *stream,char *charset,SEARCHPGM *pgm,long flags)
     s = LOCAL->tmp;		/* build sequence in temporary buffer */
     *s = '\0';			/* initially nothing */
 				/* search through mailbox */
-    for (i = 1; k && (i <= stream->nmsgs); ++i) 
+    for (i = 1; k && (i <= stream->nmsgs); ++i)
 				/* for searched messages with no envelope */
       if ((elt = mail_elt (stream,i)) && elt->searched &&
 	  !mail_elt (stream,i)->private.msg.env) {
@@ -2369,10 +2374,10 @@ THREADNODE *imap_thread (MAILSTREAM *stream,char *type,char *charset,
       (!spg || (LEVELWITHIN (stream) || !(spg->older || spg->younger))))
 				/* does server have this threader type? */
     for (thr = LOCAL->cap.threader; thr; thr = thr->next)
-      if (!compare_cstring (thr->name,type)) 
+      if (!compare_cstring (thr->name,type))
 	return imap_thread_work (stream,type,charset,spg,flags);
 				/* server doesn't support it, do locally */
-  return (flags & SE_NOLOCAL) ? NIL: 
+  return (flags & SE_NOLOCAL) ? NIL:
     mail_thread_msgs (stream,type,charset,spg,flags | SE_NOSERVER,imap_sort);
 }
 
@@ -2437,7 +2442,7 @@ THREADNODE *imap_thread_work (MAILSTREAM *stream,char *type,char *charset,
   }
 				/* do locally if server barfs */
   if (!strcmp (reply->key,"BAD"))
-    ret = (flags & SE_NOLOCAL) ? NIL: 
+    ret = (flags & SE_NOLOCAL) ? NIL:
     mail_thread_msgs (stream,type,charset,spg,flags | SE_NOSERVER,imap_sort);
 				/* server threaded OK? */
   else if (imap_OK (stream,reply)) {
@@ -3735,6 +3740,13 @@ IMAPPARSEDREPLY *imap_send_spgm (MAILSTREAM *stream,char *tag,char *base,
       (pgm->text && (reply = imap_send_slist (stream,tag,base,s," TEXT ",
 					      pgm->text,limit))))
     return reply;
+#ifdef __FEATURE_GMIME_SEARCH_EXTENTION__
+  /* Only support for gmail (It is extention api for gmail search */
+  /* Added by sh0701.kwon@samsung.com */
+  if (pgm->attachment_name && (reply = imap_send_slist (stream,tag,base,s," X-GM-RAW ", 
+								pgm->attachment_name,limit)))
+	return reply;
+#endif /* __FEATURE_GMIME_SEARCH_EXTENTION__ */
 
   /* Note that these criteria are not supported by IMAP and have to be
      emulated */
@@ -3984,9 +3996,9 @@ IMAPPARSEDREPLY *imap_reply (MAILSTREAM *stream,char *tag)
 
 	/* [santosh.br@samsung.com]  The below four lines are a hack for the timeout issue in email service. When there is blank line response for some commands, email service
 	  * waits for 30s hoping some valid response will follow. But if the stream->unhealthy parameter is set then observation shows no benefit in waiting
-	  * for any response as the response has never come after this parameter is set.Added for email performance improvement. 
-	  * 
-	  * [g.shyamakshi@samsung.com] Stream->unhealthy check is required to recognize other conditions as well - Unknown body/RFC822 message property, Unexpected tagged response, Junk data (stream invalid), etc 
+	  * for any response as the response has never come after this parameter is set.Added for email performance improvement.
+	  *
+	  * [g.shyamakshi@samsung.com] Stream->unhealthy check is required to recognize other conditions as well - Unknown body/RFC822 message property, Unexpected tagged response, Junk data (stream invalid), etc
 	  * On recognizing stream as unhealthy, no further reply should be parsed.
 	  */
 	if(stream->unhealthy) {
@@ -5199,8 +5211,8 @@ ADDRESS *imap_parse_address (MAILSTREAM *stream,unsigned char **txtptr,
 	}
       }
       else if (!adr->host) {	/* start of group? */
-		// Exception handling is removed. 
-		/* 
+		// Exception handling is removed.
+		/*
 	if (adr->personal || adr->adl) {
 	  sprintf (LOCAL->tmp,"Junk in start of group: pn=%.80s al=%.80s",
 		   adr->personal ? adr->personal : "",
@@ -5211,7 +5223,7 @@ ADDRESS *imap_parse_address (MAILSTREAM *stream,unsigned char **txtptr,
 	  adr = prev;
 	  prev = NIL;
 	}
-	else*/ ++ingroup;		 // in a group now 
+	else*/ ++ingroup;		 // in a group now
       }
       if (adr) {		/* good address */
 	if (!ret) ret = adr;	/* if first time note first adr */
@@ -5384,17 +5396,7 @@ unsigned char *imap_parse_string (MAILSTREAM *stream,unsigned char **txtptr,
 				/* search for end of string */
     for (c = **txtptr; c != '"'; ++i,c = *++*txtptr) {
 				/* backslash quotes next character */
-      if (c == '\\') {
-        if (flags == IMAP_PARSE_STRING_FLAGS_FOR_DOUBLE_QUOTE) {
-    	  if (*((*txtptr)+1) == '"') {
-    		  i++;
-    		  c = *++*txtptr;
-    	  }
-        }
-        else {
-          c = *++*txtptr;
-        }
-      }
+      if (c == '\\') c = *++*txtptr;
 				/* CHAR8 not permitted in quoted string */
       if (!bogon && (bogon = (c & 0x80))) {
         sprintf (LOCAL->tmp,"Invalid CHAR in quoted string: %x",
@@ -5413,19 +5415,7 @@ unsigned char *imap_parse_string (MAILSTREAM *stream,unsigned char **txtptr,
     ++*txtptr;			/* bump past delimiter */
     string = (char *) fs_get ((size_t) i + 3);
     for (j = 0; j < i; j++) {	/* copy the string */
-
-      if (*st == '\\') /* quoted character */ {
-    	  if (flags == IMAP_PARSE_STRING_FLAGS_FOR_DOUBLE_QUOTE) {
-        	if (*(st + 1) == '"') {
-        	  string[j++] = *st++;
-        	}
-        	else
-        	  ++st;
-        }
-        else
-          ++st;	/* quoted character */
-      }
-
+      if (*st == '\\') ++st;	/* quoted character */
       string[j] = *st++;
     }
     string[j] = '\0';		/* tie off string */
@@ -5448,7 +5438,7 @@ unsigned char *imap_parse_string (MAILSTREAM *stream,unsigned char **txtptr,
     if (len) *len = 0;
     break;
   case '{':			/* if literal string */
-				/* get size of string */ 
+				/* get size of string */
     if ((i = strtoul (*txtptr,(char **) txtptr,10)) > MAXSERVERLIT) {
       sprintf (LOCAL->tmp,"Absurd server literal length %lu",i);
       mm_notify (stream,LOCAL->tmp,WARN);
@@ -5468,7 +5458,7 @@ unsigned char *imap_parse_string (MAILSTREAM *stream,unsigned char **txtptr,
 	}
 	++*txtptr;			/* bump last char */
 	string[j] = '\0';		/* tie off string */
-    } else { 
+    } else {
 	    if (md && mg) {		/* have special routine to slurp string? */
 	      if (md->first) {		/* partial fetch? */
 		md->first--;		/* restore origin octet */
@@ -5495,7 +5485,7 @@ unsigned char *imap_parse_string (MAILSTREAM *stream,unsigned char **txtptr,
 	      reply->line = cpystr ("");
 	    if (stream->debug) mm_dlog (reply->line);
 	    *txtptr = reply->line;	/* set text pointer to point at it */
-    	}    	
+    	}
     break;
   default:
     sprintf (LOCAL->tmp,"Not a string: %c%.80s",c,(char *) *txtptr);
@@ -5624,164 +5614,202 @@ long imap_cache (MAILSTREAM *stream,unsigned long msgno,char *seg,
 void imap_parse_body_structure (MAILSTREAM *stream,BODY *body,
 				unsigned char **txtptr,IMAPPARSEDREPLY *reply)
 {
-  int i;
-  char *s;
-  PART *part = NIL;
-  char c = *((*txtptr)++);	/* grab first character */
-				/* ignore leading spaces */
-  while (c == ' ') c = *((*txtptr)++);
-  switch (c) {			/* dispatch on first character */
-  case '(':			/* body structure list */
-    if (**txtptr == '(') {	/* multipart body? */
-      body->type= TYPEMULTIPART;/* yes, set its type */
-      do {			/* instantiate new body part */
-	if (part) part = part->next = mail_newbody_part ();
-	else body->nested.part = part = mail_newbody_part ();
+	int i;
+	char *s;
+	PART *part = NIL;
+	char c = *((*txtptr)++);	/* grab first character */
+
+	/* ignore leading spaces */
+	while (c == ' ') c = *((*txtptr)++);
+
+	switch (c) {			/* dispatch on first character */
+
+	case '(':			/* body structure list */
+		if (**txtptr == '(') {	/* multipart body? */
+
+			body->type= TYPEMULTIPART;/* yes, set its type */
+			do {			/* instantiate new body part */
+				if (part) part = part->next = mail_newbody_part ();
+				else body->nested.part = part = mail_newbody_part ();
 				/* parse it */
-	imap_parse_body_structure (stream,&part->body,txtptr,reply);
-      } while (**txtptr == '(');/* for each body part */
-      if (body->subtype = imap_parse_string(stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE))
-	ucase (body->subtype);
-      else {
-	mm_notify (stream,"Missing multipart subtype",WARN);
-	stream->unhealthy = T;
-	body->subtype = cpystr (rfc822_default_subtype (body->type));
-      }
-      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* multipart parameters */
-	body->parameter = imap_parse_body_parameter (stream,txtptr,reply);
-      }
-      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* disposition */
-	imap_parse_disposition (stream,body,txtptr,reply);
-	if (LOCAL->cap.extlevel < BODYEXTDSP) LOCAL->cap.extlevel = BODYEXTDSP;
-      }
-      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* language */
-	body->language = imap_parse_language (stream,txtptr,reply);
-	if (LOCAL->cap.extlevel < BODYEXTLANG)
-	  LOCAL->cap.extlevel = BODYEXTLANG;
-      }
-      if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* location */
-	body->location = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
-	if (LOCAL->cap.extlevel < BODYEXTLOC) LOCAL->cap.extlevel = BODYEXTLOC;
-      }
-      while (**txtptr == ' ' && *((*txtptr)+ 1) != ')') imap_parse_extension (stream,txtptr,reply);
-      while ((c = **txtptr) == ' ') ++*(txtptr);
-      if (**txtptr != ')') {	/* validate ending */
-	sprintf (LOCAL->tmp,"Junk at end of multipart body: %.80s",
-		 (char *) *txtptr);
-	mm_notify (stream,LOCAL->tmp,WARN);
-	stream->unhealthy = T;
-      }
-      else ++*txtptr;		/* skip past delimiter */
-    }
-
-    else {			/* not multipart, parse type name */
-      if (**txtptr == ')') {	/* empty body? */
-	++*txtptr;		/* bump past it */
-	break;			/* and punt */
-      }
-      body->type = TYPEOTHER;	/* assume unknown type */
-      body->encoding = ENCOTHER;/* and unknown encoding */
-				/* parse type */
-      if (s = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE)) {
-	ucase (s);		/* application always gets uppercase form */
-	for (i = 0;		/* look in existing table */
-	     (i <= TYPEMAX) && body_types[i] && strcmp (s,body_types[i]); i++);
-	if (i <= TYPEMAX) {	/* only if found a slot */
-	  body->type = i;	/* set body type */
-	  if (body_types[i]) fs_give ((void **) &s);
-	  else body_types[i]=s;	/* assign empty slot */
-	}
-      }
-      if (body->subtype = imap_parse_string(stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE))
-	ucase (body->subtype);	/* parse subtype */
-      else {
-	mm_notify (stream,"Missing body subtype",WARN);
-	stream->unhealthy = T;
-	body->subtype = cpystr (rfc822_default_subtype (body->type));
-      }
-      body->parameter = imap_parse_body_parameter (stream,txtptr,reply);
-      body->id = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
-      body->description = imap_parse_string (stream,txtptr,reply,NIL,NIL,
-    		  IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
-      if (s = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE)) {
-	ucase (s);		/* application always gets uppercase form */
-	for (i = 0;		/* search for body encoding */
-	     (i <= ENCMAX) && body_encodings[i] && strcmp(s,body_encodings[i]);
-	     i++);
-	if (i > ENCMAX) body->encoding = ENCOTHER;
-	else {			/* only if found a slot */
-	  body->encoding = i;	/* set body encoding */
-	  if (body_encodings[i]) fs_give ((void **) &s);
-				/* assign empty slot */
-	  else body_encodings[i] = s;
-	}
-      }
-				/* parse size of contents in bytes */
-      body->size.bytes = strtoul (*txtptr,(char **) txtptr,10);
-      switch (body->type) {	/* possible extra stuff */
-      case TYPEMESSAGE:		/* message envelope and body */
+				imap_parse_body_structure (stream,&part->body,txtptr,reply);
+			} while (**txtptr == '(');/* for each body part */
+
+			if (body->subtype = imap_parse_string(stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE))
+				ucase (body->subtype);
+			else {
+				mm_notify (stream,"Missing multipart subtype",WARN);
+				stream->unhealthy = T;
+				body->subtype = cpystr (rfc822_default_subtype (body->type));
+			}
+
+			if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* multipart parameters */
+				body->parameter = imap_parse_body_parameter (stream,txtptr,reply);
+			}
+
+			if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* disposition */
+				imap_parse_disposition (stream,body,txtptr,reply);
+				if (LOCAL->cap.extlevel < BODYEXTDSP) LOCAL->cap.extlevel = BODYEXTDSP;
+			}
+
+			if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* language */
+				body->language = imap_parse_language (stream,txtptr,reply);
+				if (LOCAL->cap.extlevel < BODYEXTLANG)
+					LOCAL->cap.extlevel = BODYEXTLANG;
+			}
+
+
+			if (**txtptr == ' ' && *((*txtptr)+ 1) != ')') {	/* location */
+				body->location = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
+				if (LOCAL->cap.extlevel < BODYEXTLOC) LOCAL->cap.extlevel = BODYEXTLOC;
+			}
+
+
+			while (**txtptr == ' ' && *((*txtptr)+ 1) != ')') imap_parse_extension (stream,txtptr,reply);
+
+
+			while ((c = **txtptr) == ' ') ++*(txtptr);
+
+			if (**txtptr != ')') {	/* validate ending */
+				sprintf (LOCAL->tmp,"Junk at end of multipart body: %.80s",
+				(char *) *txtptr);
+				mm_notify (stream,LOCAL->tmp,WARN);
+				stream->unhealthy = T;
+			}
+			else ++*txtptr;		/* skip past delimiter */
+		}
+
+		else {			/* not multipart, parse type name */
+
+			if (**txtptr == ')') {	/* empty body? */
+				++*txtptr;		/* bump past it */
+				break;			/* and punt */
+			}
+
+			body->type = TYPEOTHER;	/* assume unknown type */
+			body->encoding = ENCOTHER;/* and unknown encoding */
+			/* parse type */
+
+			if (s = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE)) {
+				ucase (s);		/* application always gets uppercase form */
+				for (i = 0;		/* look in existing table */
+						(i <= TYPEMAX) && body_types[i] && strcmp (s,body_types[i]); i++);
+
+				if (i <= TYPEMAX) {	/* only if found a slot */
+					body->type = i;	/* set body type */
+					if (body_types[i]) fs_give ((void **) &s);
+					else body_types[i]=s;	/* assign empty slot */
+				}
+			}
+
+			if (body->subtype = imap_parse_string(stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE))
+				ucase (body->subtype);	/* parse subtype */
+			else {
+				mm_notify (stream,"Missing body subtype",WARN);
+				stream->unhealthy = T;
+				body->subtype = cpystr (rfc822_default_subtype (body->type));
+			}
+
+			body->parameter = imap_parse_body_parameter (stream,txtptr,reply);
+
+			body->id = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
+
+			body->description = imap_parse_string (stream,txtptr,reply,NIL,NIL,
+					IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
+
+			if (s = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE)) {
+				ucase (s);		/* application always gets uppercase form */
+				for (i = 0;		/* search for body encoding */
+						(i <= ENCMAX) && body_encodings[i] && strcmp(s,body_encodings[i]);i++);
+
+				if (i > ENCMAX) body->encoding = ENCOTHER;
+				else {			/* only if found a slot */
+					body->encoding = i;	/* set body encoding */
+					if (body_encodings[i]) fs_give ((void **) &s);
+						/* assign empty slot */
+					else body_encodings[i] = s;
+				}
+			}
+
+			/* parse size of contents in bytes */
+			body->size.bytes = strtoul (*txtptr,(char **) txtptr,10);
+
+			switch (body->type) {	/* possible extra stuff */
+
+			case TYPEMESSAGE:		/* message envelope and body */
 				/* non MESSAGE/RFC822 is basic type */
-	if (strcmp (body->subtype,"RFC822")) break;
-	{			/* make certain server sends an envelope */
-	  ENVELOPE *env = NIL;
-	  imap_parse_envelope (stream,&env,txtptr,reply);
-	  if (!env) {
-	    mm_notify (stream,"Missing body message envelope",WARN);
-	    stream->unhealthy = T;
-	    body->subtype = cpystr ("RFC822_MISSING_ENVELOPE");
-	    break;
-	  }
-	  (body->nested.msg = mail_newmsg ())->env = env;
+				if (strcmp (body->subtype,"RFC822")) break;
+				{			/* make certain server sends an envelope */
+					ENVELOPE *env = NIL;
+					imap_parse_envelope (stream,&env,txtptr,reply);
+					if (!env) {
+						mm_notify (stream,"Missing body message envelope",WARN);
+						//stream->unhealthy = T;
+						body->subtype = cpystr ("RFC822_MISSING_ENVELOPE");
+						break;
+					}
+					(body->nested.msg = mail_newmsg ())->env = env;
+				}
+
+				body->nested.msg->body = mail_newbody ();
+				imap_parse_body_structure (stream,body->nested.msg->body,txtptr,reply);
+
+			/* drop into text case */
+			case TYPETEXT:		/* size in lines */
+				body->size.lines = strtoul (*txtptr,(char **) txtptr,10);
+				break;
+
+			default:			/* otherwise nothing special */
+				break;
+			}
+
+			if (**txtptr == ' ' && *(*txtptr + 1) != ')' && *(*txtptr + 1) != '(') {	/* extension data - md5 */
+				body->md5 = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
+				if (LOCAL->cap.extlevel < BODYEXTMD5) LOCAL->cap.extlevel = BODYEXTMD5;
+			}
+
+			if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* disposition */
+				imap_parse_disposition (stream,body,txtptr,reply);
+				if (LOCAL->cap.extlevel < BODYEXTDSP) LOCAL->cap.extlevel = BODYEXTDSP;
+			}
+
+			if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* language */
+				body->language = imap_parse_language (stream,txtptr,reply);
+				if (LOCAL->cap.extlevel < BODYEXTLANG)
+					LOCAL->cap.extlevel = BODYEXTLANG;
+			}
+
+			if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* location */
+				body->location = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
+				if (LOCAL->cap.extlevel < BODYEXTLOC) LOCAL->cap.extlevel = BODYEXTLOC;
+			}
+
+			while (**txtptr == ' ') imap_parse_extension (stream,txtptr,reply);
+
+			if (**txtptr != ')') {	/* validate ending */
+				sprintf (LOCAL->tmp,"Junk at end of body part: %.80s", (char *) *txtptr);
+				mm_notify (stream,LOCAL->tmp,WARN);
+				stream->unhealthy = T;
+			}
+			else ++*txtptr;		/* skip past delimiter */
+
+		}
+		break;
+
+	case 'N':			/* if NIL */
+	case 'n':
+		++*txtptr;			/* bump past "I" */
+		++*txtptr;			/* bump past "L" */
+		break;
+
+	default:			/* otherwise quite bogus */
+		sprintf (LOCAL->tmp,"Bogus body structure: %.80s",(char *) *txtptr);
+		mm_notify (stream,LOCAL->tmp,WARN);
+		stream->unhealthy = T;
+		break;
 	}
-	body->nested.msg->body = mail_newbody ();
-	imap_parse_body_structure (stream,body->nested.msg->body,txtptr,reply);
-				/* drop into text case */
-      case TYPETEXT:		/* size in lines */
-	body->size.lines = strtoul (*txtptr,(char **) txtptr,10);
-	break;
-      default:			/* otherwise nothing special */
-	break;
-      }
-
-      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* extension data - md5 */
-	body->md5 = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
-	if (LOCAL->cap.extlevel < BODYEXTMD5) LOCAL->cap.extlevel = BODYEXTMD5;
-      }
-      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* disposition */
-	imap_parse_disposition (stream,body,txtptr,reply);
-	if (LOCAL->cap.extlevel < BODYEXTDSP) LOCAL->cap.extlevel = BODYEXTDSP;
-      }
-      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* language */
-	body->language = imap_parse_language (stream,txtptr,reply);
-	if (LOCAL->cap.extlevel < BODYEXTLANG)
-	  LOCAL->cap.extlevel = BODYEXTLANG;
-      }
-      if (**txtptr == ' ' && *(*txtptr + 1) != ')') {	/* location */
-	body->location = imap_parse_string (stream,txtptr,reply,NIL,NIL,IMAP_PARSE_STRING_FLAGS_FOR_NEW_LINE);
-	if (LOCAL->cap.extlevel < BODYEXTLOC) LOCAL->cap.extlevel = BODYEXTLOC;
-      }
-      while (**txtptr == ' ') imap_parse_extension (stream,txtptr,reply);
-      if (**txtptr != ')') {	/* validate ending */
-	sprintf (LOCAL->tmp,"Junk at end of body part: %.80s",
-		 (char *) *txtptr);
-	mm_notify (stream,LOCAL->tmp,WARN);
-	stream->unhealthy = T;
-      }
-      else ++*txtptr;		/* skip past delimiter */
-    }
-    break;
-  case 'N':			/* if NIL */
-  case 'n':
-    ++*txtptr;			/* bump past "I" */
-    ++*txtptr;			/* bump past "L" */
-    break;
-  default:			/* otherwise quite bogus */
-    sprintf (LOCAL->tmp,"Bogus body structure: %.80s",(char *) *txtptr);
-    mm_notify (stream,LOCAL->tmp,WARN);
-    stream->unhealthy = T;
-    break;
-  }
 }
+
 
 /* IMAP parse body parameter
  * Accepts: MAIL stream
@@ -6109,11 +6137,11 @@ IMAPPARSEDREPLY *imap_fetch (MAILSTREAM *stream,char *sequence,long flags)
 						     flags & FT_UID);
   args[0] = &aseq; aseq.type = SEQUENCE; aseq.text = (void *) sequence;
   args[1] = &aarg; aarg.type = ATOM;
-#ifdef __FEATURE_HEADER_OPTIMIZATION__	
+#ifdef __FEATURE_HEADER_OPTIMIZATION__
   aenv.type = ATOM; aenv.text = (void *) "ENVELOPE";
   /* g.shyamakshi@samsung.com - Check FT_SELECTEDHDRS flag to fetch only selected header fields */
   ahhr.type = ATOM;
-  if( flags & FT_SELECTEDHDRS ) 
+  if( flags & FT_SELECTEDHDRS )
 	  ahhr.text = (void *) "BODY.PEEK[HEADER.FIELDS (Date subject from to cc bcc message-id Return-path X-Priority x-msmail-priority Disposition-Notification-To)]";
   else
   	  ahhr.text = (void *) "BODY.PEEK[HEADER]";

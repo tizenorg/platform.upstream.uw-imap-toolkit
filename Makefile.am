@@ -30,6 +30,7 @@ libuw_imap_toolkit_la_CPPFLAGS= -I. \
 			    $(DLOG_CFLAGS) \
 			    $(SSL_CFLAGS) \
 			    -D_DEBUG_LOG \
+				-D__FEATURE_GMIME_SEARCH_EXTENTION__ \
 			    -D__FEATURE_HEADER_OPTIMIZATION__ \
 			    -D__FEATURE_SEND_OPTMIZATION__ \
 			    -D__FEATURE_XLIST_SUPPORT__ \
