@@ -6123,6 +6123,10 @@ void mail_free_searchpgm (SEARCHPGM **pgm)
     mail_free_stringlist (&(*pgm)->subject);
     mail_free_stringlist (&(*pgm)->text);
     mail_free_stringlist (&(*pgm)->to);
+#ifdef __FEATURE_GMIME_SEARCH_EXTENTION__
+	/* added by sh0701.kwon@samsung.com */
+	mail_free_stringlist (&(*pgm)->attachment_name);
+#endif /* __FEATURE_GMIME_SEARCH_EXTENTION__ */
     fs_give ((void **) pgm);	/* return program to free storage */
   }
 }

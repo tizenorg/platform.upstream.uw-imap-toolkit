@@ -5,13 +5,22 @@
 
 Name:       uw-imap-toolkit
 Summary:    IMAP-2007e developed by University of Washington
-Version:    0.1.3
+Version:    0.1.36
 Release:    0
 Group:      Messaging/Libraries
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1001:	libuw-imap-toolkit.manifest
 Source1002:	libuw-imap-toolkit-devel.manifest
+
+%if "%{?tizen_profile_name}" == "wearable"
+ExcludeArch: %{arm} %ix86 x86_64
+%endif
+
+%if "%{?tizen_profile_name}" == "tv"
+ExcludeArch: %{arm} %ix86 x86_64
+%endif
+
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires: libgcrypt-devel
