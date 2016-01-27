@@ -12,6 +12,15 @@ License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.gz
 Source1001:	libuw-imap-toolkit.manifest
 Source1002:	libuw-imap-toolkit-devel.manifest
+
+%if "%{?profile}" == "wearable"
+ExcludeArch: %{arm} %ix86 x86_64
+%endif
+
+%if "%{?profile}" == "tv"
+ExcludeArch: %{arm} %ix86 x86_64
+%endif
+
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
 BuildRequires: libgcrypt-devel
